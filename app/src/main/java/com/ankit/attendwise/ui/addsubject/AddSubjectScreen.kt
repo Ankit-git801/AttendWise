@@ -12,14 +12,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Book
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Error
-import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,17 +23,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.ankit.attendwise.R
 import com.ankit.attendwise.data.ClassSchedule
 import com.ankit.attendwise.data.Subject
 import com.ankit.attendwise.utils.ColorUtils
 import com.ankit.attendwise.viewmodel.AppViewModel
-import androidx.compose.ui.res.stringResource
-import com.ankit.attendwise.R
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -62,7 +56,7 @@ fun AddSubjectScreen(
 ) {
     var subjectName by remember { mutableStateOf("") }
     var subjectColor by remember { mutableStateOf(predefinedColors.first()) }
-    var attendanceTarget by remember { mutableStateOf(75) }
+    var attendanceTarget by remember { mutableIntStateOf(75) }
     var schedules by remember { mutableStateOf<List<UiClassSchedule>>(emptyList()) }
     var showAddScheduleDialog by remember { mutableStateOf(false) }
 
@@ -71,7 +65,6 @@ fun AddSubjectScreen(
     
     val haptic = LocalHapticFeedback.current
 
-    // Tracks if anything has been modified to show discard dialog
     var hasChanges by remember { mutableStateOf(false) }
     var showDiscardDialog by remember { mutableStateOf(false) }
 
@@ -109,27 +102,42 @@ fun AddSubjectScreen(
     val allExistingSchedules by appViewModel.allSchedules.collectAsStateWithLifecycle()
 
     val hasInvalidSchedules = schedules.any { 
-        it.schedule.startHour > it.schedule.endHour || 
-        (it.schedule.startHour == it.schedule.endHour && it.schedule.startMinute >= it.schedule.endMinute)
+        it.schedule.startHour == it.schedule.endHour && it.schedule.startMinute == it.schedule.endMinute
     }
     
     val hasOverlappingSchedules = remember(schedules, allExistingSchedules, subjectId) {
-        // Check local schedules AND schedules from other subjects
         val otherSubjectSchedules = allExistingSchedules.filter { it.subjectId != subjectId }
         val currentSubjectSchedules = schedules.map { it.schedule }
-        val combined = currentSubjectSchedules + otherSubjectSchedules
+        val allSchedulesList = currentSubjectSchedules + otherSubjectSchedules
 
-        combined.groupBy { it.dayOfWeek }.any { (_, daySchedules) ->
-            val sorted = daySchedules.sortedWith(compareBy({ it.startHour }, { it.startMinute }))
-            for (i in 0 until sorted.size - 1) {
-                val current = sorted[i]
-                val next = sorted[i + 1]
-                val currentEnd = current.endHour * 60 + current.endMinute
-                val nextStart = next.startHour * 60 + next.startMinute
-                if (currentEnd > nextStart) return@any true
+        // Normalize each schedule into [start, end] intervals in minutes since Sunday 00:00.
+        val weekIntervals = allSchedulesList.flatMap { schedule ->
+            val startMins = ((schedule.dayOfWeek - 1) * 1440) + (schedule.startHour * 60) + schedule.startMinute
+            val duration = if (schedule.endHour * 60 + schedule.endMinute <= schedule.startHour * 60 + schedule.startMinute) {
+                // If it ends exactly at start, it's 0 duration (handled by hasInvalidSchedules)
+                // Otherwise it's overnight
+                if (schedule.endHour == schedule.startHour && schedule.endMinute == schedule.startMinute) 0
+                else (1440 - (schedule.startHour * 60 + schedule.startMinute)) + (schedule.endHour * 60 + schedule.endMinute)
+            } else {
+                (schedule.endHour * 60 + schedule.endMinute) - (schedule.startHour * 60 + schedule.startMinute)
             }
-            false
+            
+            val endMins = startMins + duration
+            val totalWeekMins = 7 * 1440
+            
+            if (endMins > totalWeekMins) {
+                listOf(startMins to totalWeekMins, 0 to (endMins % totalWeekMins))
+            } else {
+                listOf(startMins to endMins)
+            }
+        }.filter { it.first < it.second }.sortedBy { it.first }
+
+        for (i in 0 until weekIntervals.size - 1) {
+            // Strictly greater than (>) allows back-to-back classes
+            if (weekIntervals[i].second > weekIntervals[i+1].first) return@remember true
         }
+        
+        false
     }
 
     var isInitialized by remember { mutableStateOf(false) }
@@ -173,7 +181,7 @@ fun AddSubjectScreen(
                 title = { Text(if (isEditMode) stringResource(R.string.edit_subject_title) else stringResource(R.string.add_subject_title)) },
                 navigationIcon = {
                     IconButton(onClick = { onBackRequest() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
@@ -186,7 +194,7 @@ fun AddSubjectScreen(
                                 color = subjectColor,
                                 targetAttendance = attendanceTarget
                             )
-                            val schedulesList: List<com.ankit.attendwise.data.ClassSchedule> = schedules.map { it.schedule }
+                            val schedulesList = schedules.map { it.schedule }
                             appViewModel.addOrUpdateSubject(
                                 newSubject,
                                 schedulesList,
@@ -321,7 +329,7 @@ private fun ColorPicker(selectedColor: String, onColorSelected: (String) -> Unit
                 contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
                 items(predefinedColors) { colorHex ->
-                    val isSelected = colorHex.lowercase() == selectedColor.lowercase()
+                    val isSelected = colorHex.equals(selectedColor, ignoreCase = true)
                     val color = ColorUtils.safeParseColor(colorHex)
                     
                     Box(
@@ -340,7 +348,7 @@ private fun ColorPicker(selectedColor: String, onColorSelected: (String) -> Unit
                         if (isSelected) {
                             Icon(
                                 imageVector = Icons.Default.Check,
-                                contentDescription = "Selected",
+                                contentDescription = stringResource(R.string.content_desc_selected),
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
@@ -414,7 +422,7 @@ private fun ScheduleCard(schedule: ClassSchedule, onDelete: () -> Unit) {
                 Text("${formatTime(schedule.startHour, schedule.startMinute)} - ${formatTime(schedule.endHour, schedule.endMinute)}")
             }
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete schedule", tint = MaterialTheme.colorScheme.error)
+                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
             }
         }
     }
@@ -422,15 +430,15 @@ private fun ScheduleCard(schedule: ClassSchedule, onDelete: () -> Unit) {
 
 @Composable
 private fun AddScheduleDialog(onDismiss: () -> Unit, onAddSchedule: (ClassSchedule) -> Unit) {
-    var selectedDay by remember { mutableStateOf(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) }
+    var selectedDay by remember { mutableIntStateOf(Calendar.getInstance().get(Calendar.DAY_OF_WEEK)) }
 
     val calendar = Calendar.getInstance()
-    var startHour by remember { mutableStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
-    var startMinute by remember { mutableStateOf(calendar.get(Calendar.MINUTE)) }
+    var startHour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
+    var startMinute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
 
     calendar.add(Calendar.HOUR_OF_DAY, 1)
-    var endHour by remember { mutableStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
-    var endMinute by remember { mutableStateOf(calendar.get(Calendar.MINUTE)) }
+    var endHour by remember { mutableIntStateOf(calendar.get(Calendar.HOUR_OF_DAY)) }
+    var endMinute by remember { mutableIntStateOf(calendar.get(Calendar.MINUTE)) }
 
     val context = LocalContext.current
 
@@ -448,7 +456,7 @@ private fun AddScheduleDialog(onDismiss: () -> Unit, onAddSchedule: (ClassSchedu
         },
         text = {
             Column {
-                Divider(modifier = Modifier.padding(bottom = 16.dp))
+                HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
                 DaySelector(selectedDay) { selectedDay = it }
                 Spacer(Modifier.height(16.dp))
                 TimeSelector(stringResource(R.string.label_start_time), startHour, startMinute) { startTimePickerDialog.show() }
@@ -457,10 +465,13 @@ private fun AddScheduleDialog(onDismiss: () -> Unit, onAddSchedule: (ClassSchedu
             }
         },
         confirmButton = {
-            Button(onClick = {
-                onAddSchedule(ClassSchedule(id = "", subjectId = "", dayOfWeek = selectedDay, startHour = startHour, startMinute = startMinute, endHour = endHour, endMinute = endMinute))
-                onDismiss()
-            }) { Text(stringResource(R.string.action_add)) }
+            Button(
+                onClick = {
+                    onAddSchedule(ClassSchedule(id = "", subjectId = "", dayOfWeek = selectedDay, startHour = startHour, startMinute = startMinute, endHour = endHour, endMinute = endMinute))
+                    onDismiss()
+                },
+                enabled = startHour != endHour || startMinute != endMinute
+            ) { Text(stringResource(R.string.action_add)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
@@ -472,8 +483,13 @@ private fun AddScheduleDialog(onDismiss: () -> Unit, onAddSchedule: (ClassSchedu
 @Composable
 private fun DaySelector(selectedDay: Int, onDaySelected: (Int) -> Unit) {
     val days = listOf(
-        "Mon" to Calendar.MONDAY, "Tue" to Calendar.TUESDAY, "Wed" to Calendar.WEDNESDAY,
-        "Thu" to Calendar.THURSDAY, "Fri" to Calendar.FRIDAY, "Sat" to Calendar.SATURDAY, "Sun" to Calendar.SUNDAY
+        stringResource(R.string.day_mon) to Calendar.MONDAY, 
+        stringResource(R.string.day_tue) to Calendar.TUESDAY, 
+        stringResource(R.string.day_wed) to Calendar.WEDNESDAY,
+        stringResource(R.string.day_thu) to Calendar.THURSDAY, 
+        stringResource(R.string.day_fri) to Calendar.FRIDAY, 
+        stringResource(R.string.day_sat) to Calendar.SATURDAY, 
+        stringResource(R.string.day_sun) to Calendar.SUNDAY
     )
     Column {
         Text(stringResource(R.string.label_day_of_week), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)

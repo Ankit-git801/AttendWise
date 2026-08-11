@@ -12,46 +12,49 @@ import kotlinx.coroutines.*
 import java.time.LocalDate
 
 class NotificationDismissReceiver : BroadcastReceiver() {
-    private val TAG = "NotificationDismiss"
+    private val tag = "NotificationDismiss"
 
     override fun onReceive(context: Context, intent: Intent) {
         val subjectId = intent.getStringExtra("subject_id") ?: ""
         val scheduleId = intent.getStringExtra("schedule_id") ?: ""
+        val sessionDateEpoch = intent.getLongExtra("EXTRA_SESSION_DATE", LocalDate.now().toEpochDay())
 
         if (subjectId.isEmpty() || scheduleId.isEmpty()) return
+
+        // TRACKER: If this notification was just processed by an action OR in-app mark, do nothing
+        if (NotificationProcessingTracker.isRecentlyProcessed(subjectId, scheduleId)) {
+            Log.d(tag, "Notification for $subjectId / $scheduleId was recently processed. Ignoring dismiss.")
+            return
+        }
 
         val pendingResult = goAsync()
         CoroutineScope(Dispatchers.IO).launch {
             try {
-                // SAFETY DELAY: Give the ActionReceiver a chance to finish database IO
-                delay(500) 
-                
                 val dao = AppDatabase.getDatabase(context).attendanceDao()
-                val today = LocalDate.now().toEpochDay()
                 
                 // CRITICAL: Check if it was already marked (Present/Absent/Cancelled/Holiday)
                 // before re-posting. This prevents re-posting if marked just before swipe.
-                val records = dao.getAttendanceRecordsForSubjectOnDate(subjectId, today)
+                val records = dao.getAttendanceRecordsForSubjectOnDate(subjectId, sessionDateEpoch)
                 val isMarked = records.any { 
                     it.scheduleId == scheduleId || it.scheduleId == ID_SCHEDULE_MANUAL 
                 }
                 
-                val todayRecords = dao.getAllAttendanceRecordsOnDateNow(today)
-                val isHoliday = todayRecords.any { it.type == RecordType.HOLIDAY }
+                val dateRecords = dao.getAllAttendanceRecordsOnDateNow(sessionDateEpoch)
+                val isHoliday = dateRecords.any { it.type == RecordType.HOLIDAY }
 
                 if (!isMarked && !isHoliday) {
-                    Log.d(TAG, "Notification swiped but not marked. Re-posting for $subjectId")
+                    Log.d(tag, "Notification swiped but not marked. Re-posting for $subjectId (Session: $sessionDateEpoch)")
                     val subject = dao.getSubjectById(subjectId)
                     val schedule = dao.getScheduleById(scheduleId)
                     
                     if (subject != null && schedule != null) {
-                        NotificationHelper.showAttendanceNotification(context, subject, schedule)
+                        NotificationHelper.showAttendanceNotification(context, subject, schedule, sessionDateEpoch)
                     }
                 } else {
-                    Log.d(TAG, "Notification swiped but already marked or holiday. Not re-posting.")
+                    Log.d(tag, "Notification swiped but already marked or holiday. Not re-posting.")
                 }
             } catch (e: Exception) {
-                Log.e(TAG, "Error in NotificationDismissReceiver: ${e.message}")
+                Log.e(tag, "Error in NotificationDismissReceiver: ${e.message}")
             } finally {
                 pendingResult.finish()
             }

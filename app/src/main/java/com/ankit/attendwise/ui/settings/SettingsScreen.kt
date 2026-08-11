@@ -2,11 +2,8 @@
 
 package com.ankit.attendwise.ui.settings
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -15,17 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.CloudQueue
-import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.DeleteForever
-import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.Login
-import androidx.compose.material.icons.filled.Logout
-import androidx.compose.material.icons.filled.OpenInNew
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,12 +26,12 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
 import com.ankit.attendwise.viewmodel.AppViewModel
-
 import androidx.compose.ui.res.stringResource
 import com.ankit.attendwise.R
 import android.widget.Toast
@@ -96,7 +86,7 @@ fun SettingsScreen(navController: NavController, appViewModel: AppViewModel) {
             currentName = userName,
             onDismiss = { showNameDialog = false },
             onNameChange = {
-                appViewModel.setUserName(it)
+                appViewModel.updateUserName(it)
                 showNameDialog = false
             }
         )
@@ -138,6 +128,7 @@ fun SettingsScreen(navController: NavController, appViewModel: AppViewModel) {
                     title = stringResource(R.string.setting_send_feedback),
                     subtitle = stringResource(R.string.setting_send_feedback_subtitle),
                     icon = { Icon(Icons.Default.Feedback, contentDescription = null) },
+                    trailingIcon = { Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
                     onClick = {
                         val intent = Intent(Intent.ACTION_SENDTO).apply {
                             data = Uri.parse("mailto:ak8485332@gmail.com")
@@ -146,7 +137,7 @@ fun SettingsScreen(navController: NavController, appViewModel: AppViewModel) {
                         try {
                             context.startActivity(intent)
                         } catch (e: Exception) {
-                            Toast.makeText(context, context.getString(R.string.error_no_email_app), Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, R.string.error_no_email_app, Toast.LENGTH_SHORT).show()
                         }
                     }
                 )
@@ -168,27 +159,6 @@ fun SettingsScreen(navController: NavController, appViewModel: AppViewModel) {
             }
             item {
                 SettingsSectionTitle(stringResource(R.string.section_system_permissions))
-                SystemPermissionItem(
-                    title = stringResource(R.string.setting_battery_optimization),
-                    subtitle = stringResource(R.string.setting_battery_optimization_subtitle),
-                    onClick = {
-                        try {
-                            val intent = Intent().apply {
-                                action = Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS
-                                data = Uri.parse("package:${context.packageName}")
-                            }
-                            context.startActivity(intent)
-                        } catch (e: Exception) {
-                            // Fallback to general battery settings
-                            try {
-                                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                                context.startActivity(intent)
-                            } catch (e2: Exception) {
-                                context.startActivity(Intent(Settings.ACTION_SETTINGS))
-                            }
-                        }
-                    }
-                )
                 SystemPermissionItem(
                     title = stringResource(R.string.setting_exact_alarms),
                     subtitle = stringResource(R.string.setting_exact_alarms_subtitle),
@@ -302,7 +272,6 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
     var showAuthDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
 
-    // Listen for Auth changes automatically
     DisposableEffect(Unit) {
         val listener = FirebaseAuth.AuthStateListener { auth ->
             user = auth.currentUser
@@ -390,7 +359,7 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
                     enabled = !isSyncing,
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Login, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.action_connect_account))
                 }
@@ -402,7 +371,7 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Logout, contentDescription = null)
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
                     Text(stringResource(R.string.action_sign_out))
                 }
@@ -420,6 +389,7 @@ fun AuthDialog(
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
     var isSignUp by remember { mutableStateOf(initialIsSignUp) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -449,7 +419,14 @@ fun AuthDialog(
                     label = { Text(stringResource(R.string.label_password)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    trailingIcon = {
+                        val icon = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                        val description = if (passwordVisible) "Hide password" else "Show password"
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(imageVector = icon, contentDescription = description)
+                        }
+                    },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -511,7 +488,6 @@ fun AuthDialog(
                             if (success) {
                                 onResult(true, null)
                             } else {
-                                // Map common errors
                                 val finalMsg = when {
                                     msg?.contains("password", ignoreCase = true) == true || 
                                     msg?.contains("auth is incorrect", ignoreCase = true) == true ||
@@ -559,6 +535,7 @@ fun SettingsItem(
     title: String,
     subtitle: String,
     icon: @Composable () -> Unit,
+    trailingIcon: @Composable (() -> Unit)? = null,
     isDestructive: Boolean = false,
     onClick: () -> Unit
 ) {
@@ -582,7 +559,11 @@ fun SettingsItem(
             Text(title, style = MaterialTheme.typography.bodyLarge, color = contentColor)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = subtitleColor)
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (trailingIcon != null) {
+            trailingIcon()
+        } else {
+            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -599,6 +580,6 @@ fun SystemPermissionItem(title: String, subtitle: String, onClick: () -> Unit) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(Icons.Default.OpenInNew, contentDescription = "Open Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = "Open Settings", tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -21,7 +21,9 @@ import com.google.firebase.firestore.PropertyName
     ],
     indices = [
         Index(value = ["subjectId"]),
-        Index(value = ["date"])
+        Index(value = ["date"]),
+        Index(value = ["type", "isPresent"]),
+        Index(value = ["subjectId", "type", "isPresent"])
     ]
 )
 data class AttendanceRecord(

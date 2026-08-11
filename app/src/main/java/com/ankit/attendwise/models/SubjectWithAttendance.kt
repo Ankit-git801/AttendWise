@@ -5,6 +5,8 @@ import androidx.compose.runtime.Immutable
 import androidx.room.Embedded
 import com.ankit.attendwise.data.Subject
 
+import com.ankit.attendwise.utils.AttendanceUtils
+
 /**
  * An immutable data class that combines Subject details with its attendance statistics.
  * This is more efficient for Jetpack Compose as it helps avoid unnecessary recompositions.
@@ -25,5 +27,5 @@ data class SubjectWithAttendance(
      * This is a cheap calculation and avoids storing redundant data.
      */
     val percentage: Double
-        get() = if (totalClasses > 0) (presentClasses.toDouble() / totalClasses) * 100.0 else 0.0
+        get() = AttendanceUtils.calculatePercentage(presentClasses, totalClasses)
 }

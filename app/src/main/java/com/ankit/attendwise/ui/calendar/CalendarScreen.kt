@@ -24,7 +24,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -39,6 +38,8 @@ import com.ankit.attendwise.viewmodel.AppViewModel
 import com.kizitonwose.calendar.compose.HorizontalCalendar
 import com.kizitonwose.calendar.compose.rememberCalendarState
 import com.kizitonwose.calendar.core.firstDayOfWeekFromLocale
+import androidx.compose.ui.res.stringResource
+import com.ankit.attendwise.R
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -46,7 +47,7 @@ import java.util.Locale
 import kotlinx.coroutines.launch
 
 @Composable
-fun CalendarScreen(navController: NavController, appViewModel: AppViewModel) {
+fun CalendarScreen(appViewModel: AppViewModel) {
     val allRecords by appViewModel.allAttendanceRecords.collectAsStateWithLifecycle()
     val allSubjects by appViewModel.allSubjects.collectAsStateWithLifecycle()
     var selectedDate by remember { mutableStateOf<LocalDate?>(null) }
@@ -65,8 +66,8 @@ fun CalendarScreen(navController: NavController, appViewModel: AppViewModel) {
     if (showDeleteConfirmation != null) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = null },
-            title = { Text("Delete Record") },
-            text = { Text("Are you sure you want to delete this attendance record? This action cannot be undone.") },
+            title = { Text(stringResource(R.string.dialog_delete_record_title)) },
+            text = { Text(stringResource(R.string.dialog_delete_record_text)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -76,13 +77,13 @@ fun CalendarScreen(navController: NavController, appViewModel: AppViewModel) {
                         showDeleteConfirmation = null
                     },
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Delete") }
+                ) { Text(stringResource(R.string.action_delete)) }
             },
             dismissButton = { 
                 TextButton(
                     onClick = { showDeleteConfirmation = null },
                     shape = RoundedCornerShape(12.dp)
-                ) { Text("Cancel") } 
+                ) { Text(stringResource(R.string.action_cancel)) } 
             }
         )
     }
@@ -100,7 +101,7 @@ fun CalendarScreen(navController: NavController, appViewModel: AppViewModel) {
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("Attendance Calendar") })
+            TopAppBar(title = { Text(stringResource(R.string.nav_calendar)) })
         }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
@@ -172,14 +173,14 @@ fun DayDetailDialog(
             ) {
                 if (isHoliday) {
                     Text(
-                        "Public Holiday / No Classes",
+                        stringResource(R.string.holiday_title),
                         color = HolidayYellow,
                         fontWeight = FontWeight.Medium
                     )
                 }
 
                 if (records.isEmpty() && !isHoliday) {
-                    Text("No records for this day")
+                    Text(stringResource(R.string.no_records_day))
                 }
 
                 if (!isHoliday) {
@@ -193,7 +194,7 @@ fun DayDetailDialog(
                         ) {
                             Icon(Icons.Default.EventBusy, contentDescription = null)
                             Spacer(Modifier.width(8.dp))
-                            Text("Mark Class as Cancelled")
+                            Text(stringResource(R.string.mark_cancelled))
                         }
 
                         DropdownMenu(
@@ -203,19 +204,19 @@ fun DayDetailDialog(
                         ) {
                             if (allSubjects.isEmpty()) {
                                 DropdownMenuItem(
-                                    text = { Text("No subjects added") },
+                                    text = { Text(stringResource(R.string.error_no_subjects)) },
                                     onClick = { showCancelMenu = false }
                                 )
                             } else {
                                 Text(
-                                    "Select Subject",
+                                    stringResource(R.string.label_select_subject),
                                     style = MaterialTheme.typography.labelSmall,
                                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
                                     color = MaterialTheme.colorScheme.primary
                                 )
                                 allSubjects.forEach { subject ->
                                     DropdownMenuItem(
-                                        text = { Text(subject.name ?: "Unknown") },
+                                        text = { Text(subject.name) },
                                         onClick = {
                                             onConfirmCancelled(subject.id)
                                             showCancelMenu = false
@@ -246,14 +247,14 @@ fun DayDetailDialog(
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    text = recordWithSubject.subjectName ?: "Unknown",
+                                    text = recordWithSubject.subjectName ?: stringResource(R.string.label_unknown),
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Bold
                                 )
                                 val statusText = when {
-                                    record.type == RecordType.CANCELLED -> "Cancelled"
-                                    record.isPresent -> "Present"
-                                    else -> "Absent"
+                                    record.type == RecordType.CANCELLED -> stringResource(R.string.mark_cancelled)
+                                    record.isPresent -> stringResource(R.string.mark_present)
+                                    else -> stringResource(R.string.mark_absent)
                                 }
                                 val statusColor = when {
                                     record.type == RecordType.CANCELLED -> MaterialTheme.colorScheme.outline
@@ -276,7 +277,7 @@ fun DayDetailDialog(
                             IconButton(onClick = { onDeleteRecord(record.id) }) {
                                 Icon(
                                     Icons.Default.Delete,
-                                    contentDescription = "Delete",
+                                    contentDescription = stringResource(R.string.action_delete),
                                     tint = MaterialTheme.colorScheme.error
                                 )
                             }
@@ -290,7 +291,7 @@ fun DayDetailDialog(
                 onClick = onToggleHoliday,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(if (isHoliday) "Remove Holiday" else "Mark as Holiday")
+                Text(if (isHoliday) stringResource(R.string.action_remove) + " " + stringResource(R.string.mark_holiday) else stringResource(R.string.action_add) + " " + stringResource(R.string.mark_holiday))
             }
         },
         dismissButton = {
@@ -298,7 +299,7 @@ fun DayDetailDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -311,14 +312,14 @@ fun HolidayConfirmationDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Mark as Holiday?") },
-        text = { Text("This will remove all attendance records for this date. Do you want to proceed?") },
+        title = { Text(stringResource(R.string.dialog_mark_holiday_title)) },
+        text = { Text(stringResource(R.string.dialog_mark_holiday_text)) },
         confirmButton = {
             Button(
                 onClick = onConfirm,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Proceed")
+                Text(stringResource(R.string.action_proceed))
             }
         },
         dismissButton = {
@@ -326,7 +327,7 @@ fun HolidayConfirmationDialog(
                 onClick = onDismiss,
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text("Cancel")
+                Text(stringResource(R.string.action_cancel))
             }
         }
     )
@@ -372,7 +373,7 @@ fun AttendanceCalendar(
                     state.animateScrollToMonth(state.firstVisibleMonth.yearMonth.minusMonths(1))
                 }
             }) {
-                Icon(Icons.Default.ChevronLeft, contentDescription = "Previous Month")
+                Icon(Icons.Default.ChevronLeft, contentDescription = stringResource(R.string.content_desc_prev_month))
             }
 
             Text(
@@ -387,7 +388,7 @@ fun AttendanceCalendar(
                     state.animateScrollToMonth(state.firstVisibleMonth.yearMonth.plusMonths(1))
                 }
             }) {
-                Icon(Icons.Default.ChevronRight, contentDescription = "Next Month")
+                Icon(Icons.Default.ChevronRight, contentDescription = stringResource(R.string.content_desc_next_month))
             }
         }
         

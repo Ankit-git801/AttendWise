@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import com.ankit.attendwise.data.*
-import com.ankit.attendwise.utils.Constants.ID_SCHEDULE_MANUAL
+import com.ankit.attendwise.utils.AttendanceUtils
 import com.ankit.attendwise.utils.NotificationHelper
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -23,6 +23,7 @@ class NotificationActionReceiver : BroadcastReceiver() {
         const val EXTRA_IS_PRESENT = "EXTRA_IS_PRESENT"
         const val EXTRA_NOTIFICATION_ID = "EXTRA_NOTIFICATION_ID"
         const val EXTRA_SCHEDULE_ID = "EXTRA_SCHEDULE_ID"
+        const val EXTRA_DATE_EPOCH = "EXTRA_DATE_EPOCH"
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -41,26 +42,29 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     val isPresent = intent.getBooleanExtra(EXTRA_IS_PRESENT, false)
                     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
                     val scheduleId = intent.getStringExtra(EXTRA_SCHEDULE_ID) ?: ""
+                    val targetDate = intent.getLongExtra(EXTRA_DATE_EPOCH, LocalDate.now().toEpochDay())
 
                     if (subjectId.isNotEmpty()) {
                         val dao = AppDatabase.getDatabase(context).attendanceDao()
                         val cloudSyncManager = CloudSyncManager(context)
-                        val today = LocalDate.now().toEpochDay()
 
-                        val allDayRecords = dao.getAllAttendanceRecordsOnDateNow(today)
+                        // TRACKER: Mark as processed to prevent race conditions with dismissal
+                        NotificationProcessingTracker.markAsProcessed(notificationId)
+
+                        val allDayRecords = dao.getAllAttendanceRecordsOnDateNow(targetDate)
                         if (allDayRecords.any { it.type == RecordType.HOLIDAY }) {
                             NotificationHelper.cancelNotification(context, notificationId)
                             return@withLock
                         }
 
-                        val existingRecords = dao.getAttendanceRecordsForSubjectOnDate(subjectId, today)
-                        val recordIdsToClean = existingRecords.filter { (it.scheduleId == scheduleId) || (it.scheduleId == ID_SCHEDULE_MANUAL) }.map { it.id }
+                        val existingRecords = dao.getAttendanceRecordsForSubjectOnDate(subjectId, targetDate)
+                        val recordIdsToClean = existingRecords.asSequence().filter { it.scheduleId == scheduleId }.map { it.id }.toList()
 
                         val record = AttendanceRecord(
                             id = UUID.randomUUID().toString(),
                             subjectId = subjectId,
                             scheduleId = scheduleId,
-                            date = today,
+                            date = targetDate,
                             isPresent = isPresent,
                             note = "Marked from notification",
                             type = RecordType.CLASS,
@@ -75,16 +79,15 @@ class NotificationActionReceiver : BroadcastReceiver() {
                         cloudSyncManager.syncAttendanceRecord(record)
 
                         val subject = dao.getSubjectById(subjectId)
-
-                        if (subject != null) {
+                        subject?.let { sub ->
                             val total = dao.getTotalClassesForSubject(subjectId)
                             val present = dao.getPresentClassesForSubject(subjectId)
-                            val newPercentage = if (total > 0) (present.toDouble() / total) * 100.0 else 0.0
+                            val newPercentage = AttendanceUtils.calculatePercentage(present, total)
 
-                            NotificationHelper.showUpdatedAttendanceNotification(context, subject.name, newPercentage, notificationId, false)
+                            NotificationHelper.showUpdatedAttendanceNotification(context, subjectId, sub.name, newPercentage, notificationId, wasCancelled = false)
 
-                            if (newPercentage < subject.targetAttendance && total > 0) {
-                                NotificationHelper.showAttendanceWarningNotification(context, subject, newPercentage)
+                            if ((newPercentage < sub.targetAttendance) && (total > 0)) {
+                                NotificationHelper.showAttendanceWarningNotification(context, sub, newPercentage)
                             }
                         }
                     }
@@ -105,26 +108,29 @@ class NotificationActionReceiver : BroadcastReceiver() {
                     val subjectId = intent.getStringExtra(EXTRA_SUBJECT_ID) ?: ""
                     val scheduleId = intent.getStringExtra(EXTRA_SCHEDULE_ID) ?: ""
                     val notificationId = intent.getIntExtra(EXTRA_NOTIFICATION_ID, 0)
+                    val targetDate = intent.getLongExtra(EXTRA_DATE_EPOCH, LocalDate.now().toEpochDay())
 
                     if (subjectId.isNotEmpty()) {
                         val dao = AppDatabase.getDatabase(context).attendanceDao()
                         val cloudSyncManager = CloudSyncManager(context)
-                        val today = LocalDate.now().toEpochDay()
 
-                        val allDayRecords = dao.getAllAttendanceRecordsOnDateNow(today)
+                        // TRACKER: Mark as processed to prevent race conditions with dismissal
+                        NotificationProcessingTracker.markAsProcessed(notificationId)
+
+                        val allDayRecords = dao.getAllAttendanceRecordsOnDateNow(targetDate)
                         if (allDayRecords.any { it.type == RecordType.HOLIDAY }) {
                             NotificationHelper.cancelNotification(context, notificationId)
                             return@withLock
                         }
 
-                        val existingRecords = dao.getAttendanceRecordsForSubjectOnDate(subjectId, today)
-                        val recordIdsToClean = existingRecords.filter { (it.scheduleId == scheduleId) || (it.scheduleId == ID_SCHEDULE_MANUAL) }.map { it.id }
+                        val existingRecords = dao.getAttendanceRecordsForSubjectOnDate(subjectId, targetDate)
+                        val recordIdsToClean = existingRecords.asSequence().filter { it.scheduleId == scheduleId }.map { it.id }.toList()
 
                         val record = AttendanceRecord(
                             id = UUID.randomUUID().toString(),
                             subjectId = subjectId,
                             scheduleId = scheduleId,
-                            date = today,
+                            date = targetDate,
                             isPresent = false,
                             note = "Class Cancelled",
                             type = RecordType.CANCELLED,
@@ -139,13 +145,12 @@ class NotificationActionReceiver : BroadcastReceiver() {
                         cloudSyncManager.syncAttendanceRecord(record)
 
                         val subject = dao.getSubjectById(subjectId)
-
-                        if (subject != null) {
+                        subject?.let { sub ->
                             val total = dao.getTotalClassesForSubject(subjectId)
                             val present = dao.getPresentClassesForSubject(subjectId)
-                            val newPercentage = if (total > 0) (present.toDouble() / total) * 100.0 else 0.0
+                            val newPercentage = AttendanceUtils.calculatePercentage(present, total)
                             
-                            NotificationHelper.showUpdatedAttendanceNotification(context, subject.name, newPercentage, notificationId, true)
+                            NotificationHelper.showUpdatedAttendanceNotification(context, subjectId, sub.name, newPercentage, notificationId, wasCancelled = true)
                         }
                     }
                 }

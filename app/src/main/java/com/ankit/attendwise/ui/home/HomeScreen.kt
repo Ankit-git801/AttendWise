@@ -13,25 +13,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Cancel
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.EventBusy
-import androidx.compose.material.icons.filled.MenuBook
-import androidx.compose.material.icons.filled.NightsStay
-import androidx.compose.material.icons.filled.PlaylistAdd
-import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.filled.WbCloudy
-import androidx.compose.material.icons.filled.WbSunny
-import androidx.compose.material.icons.filled.WbTwilight
+import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -41,7 +29,6 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.ankit.attendwise.data.BunkAnalysis
@@ -68,32 +55,31 @@ data class GreetingInfo(
     val gradientColors: List<Color>
 )
 
-fun getGreetingInfo(): GreetingInfo {
-    val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+fun getGreetingInfo(hour: Int = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)): GreetingInfo {
     return when (hour) {
-        // Morning: 4:00 AM - 12:00 PM (Sunrise shade)
+        // Morning: 4:00 AM - 11:59 AM
         in 4..11 -> GreetingInfo(
             R.string.greeting_morning,
             Icons.Default.WbSunny,
-            listOf(Color(0xFFFF9800), Color(0xFFFFE082))
+            listOf(Color(0xFFFE8C00), Color(0xFFF83600))
         )
-        // Afternoon: 12:00 PM - 4:00 PM (Noon shade)
-        in 12..15 -> GreetingInfo(
+        // Afternoon: 12:00 PM - 4:59 PM
+        in 12..16 -> GreetingInfo(
             R.string.greeting_afternoon,
             Icons.Default.WbCloudy,
-            listOf(Color(0xFF00B0FF), Color(0xFF80D8FF))
+            listOf(Color(0xFF89F7FE), Color(0xFF66A6FF))
         )
-        // Early Evening: 4:00 PM - 8:00 PM (Current Blue-Orange shade)
-        in 16..19 -> GreetingInfo(
+        // Evening: 5:00 PM - 7:59 PM
+        in 17..19 -> GreetingInfo(
             R.string.greeting_evening,
             Icons.Default.WbTwilight,
-            listOf(Color(0xFCFF4E4E), Color(0xFFFFEB3B))
+            listOf(Color(0xFF654EA3), Color(0xFFEAAFC8))
         )
-        // Late Evening/Night: 8:00 PM - 4:00 AM (Good Evening with Night shade)
+        // Night: 8:00 PM - 3:59 AM
         else -> GreetingInfo(
             R.string.greeting_evening,
             Icons.Default.NightsStay,
-            listOf(Color(0xFF311B92), Color(0xFF1A237E))
+            listOf(Color(0xFF232526), Color(0xFF414345))
         )
     }
 }
@@ -101,10 +87,13 @@ fun getGreetingInfo(): GreetingInfo {
 @Composable
 fun HomeScreen(navController: NavController, appViewModel: AppViewModel) {
     val subjectsWithAttendance by appViewModel.subjectsWithAttendance.collectAsStateWithLifecycle()
-    val todaysSchedule by appViewModel.todaysScheduleWithSubjects.collectAsStateWithLifecycle()
+    val dashboardData by appViewModel.dashboardScheduleWithSubjects.collectAsStateWithLifecycle()
+    val (isTomorrow, displaySchedule) = dashboardData
+    
     val userName by appViewModel.userName.collectAsStateWithLifecycle()
     val bunkAnalysisMap by appViewModel.bunkAnalysisMap.collectAsStateWithLifecycle()
     val currentDate by appViewModel.currentDate.collectAsStateWithLifecycle()
+    
     var showExtraClassDialog by remember { mutableStateOf(false) }
     
     val haptic = LocalHapticFeedback.current
@@ -137,16 +126,28 @@ fun HomeScreen(navController: NavController, appViewModel: AppViewModel) {
         }
 
         item {
-            Text(
-                stringResource(R.string.section_todays_classes),
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    if (isTomorrow) stringResource(R.string.section_tomorrows_classes) else stringResource(R.string.section_todays_classes),
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                
+                TextButton(onClick = { 
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    appViewModel.toggleTomorrowPreview() 
+                }) {
+                    Text(if (isTomorrow) stringResource(R.string.action_show_today) else "Next Day")
+                }
+            }
         }
 
-        if (isTodayHoliday) {
+        if (isTodayHoliday && !isTomorrow) {
             item {
                 EmptyState(
                     icon = Icons.Default.WbSunny,
@@ -159,19 +160,33 @@ fun HomeScreen(navController: NavController, appViewModel: AppViewModel) {
                     }
                 )
             }
-        } else if (todaysSchedule.isEmpty()) {
+        } else if (displaySchedule.isEmpty()) {
             item {
+                val isTomorrowHoliday by appViewModel.allAttendanceRecords.collectAsStateWithLifecycle()
+                val tomorrowDate = currentDate.plusDays(1)
+                val isHoliday = isTomorrow && isTomorrowHoliday.any { it.date == tomorrowDate.toEpochDay() && it.type == RecordType.HOLIDAY }
+
                 EmptyState(
-                    icon = Icons.Default.CalendarToday,
-                    title = stringResource(R.string.no_classes_title),
-                    subtitle = stringResource(R.string.no_classes_subtitle)
+                    icon = if (isHoliday) Icons.Default.WbSunny else Icons.Default.CalendarToday,
+                    title = stringResource(
+                        if (isHoliday) R.string.holiday_title 
+                        else if (isTomorrow) R.string.no_classes_tomorrow_title 
+                        else R.string.no_classes_title
+                    ),
+                    subtitle = stringResource(
+                        if (isHoliday) R.string.holiday_subtitle 
+                        else if (isTomorrow) R.string.no_classes_tomorrow_subtitle 
+                        else R.string.no_classes_subtitle
+                    )
                 )
             }
         } else {
-            items(todaysSchedule, key = { it.schedule.id }) { schedule ->
+            items(displaySchedule, key = { it.schedule.id }) { schedule ->
+                val markingDate = schedule.effectiveDate ?: (if (isTomorrow) currentDate.plusDays(1) else currentDate)
                 TodayScheduleCard(
                     scheduleWithSubject = schedule,
                     appViewModel = appViewModel,
+                    date = markingDate,
                     onClick = { navController.navigate("subject_detail/${schedule.subject.id}") }
                 )
             }
@@ -190,7 +205,7 @@ fun HomeScreen(navController: NavController, appViewModel: AppViewModel) {
         if (subjectsWithAttendance.isEmpty()) {
             item {
                 EmptyState(
-                    icon = Icons.Default.MenuBook,
+                    icon = Icons.AutoMirrored.Filled.MenuBook,
                     title = stringResource(R.string.no_subjects_title),
                     subtitle = stringResource(R.string.no_subjects_subtitle),
                     actionLabel = stringResource(R.string.action_add_subject),
@@ -226,7 +241,8 @@ fun HomeScreen(navController: NavController, appViewModel: AppViewModel) {
                     Button(
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                            appViewModel.addExtraClasses(subId, LocalDate.now(), present, count)
+                            val markingDate = if (isTomorrow) currentDate.plusDays(1) else currentDate
+                            appViewModel.addExtraClasses(subId, markingDate, present, count)
                             pendingConfirmationData = null
                             showExtraClassDialog = false
                         },
@@ -259,7 +275,7 @@ fun ExtraClassDialog(
 ) {
     var selectedSubjectId by remember { mutableStateOf(subjects.firstOrNull()?.id ?: "") }
     var isPresent by remember { mutableStateOf(true) }
-    var count by remember { mutableStateOf(1) }
+    var count by remember { mutableIntStateOf(1) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -357,7 +373,10 @@ fun ExtraClassDialog(
 
 @Composable
 fun GreetingCard(userName: String, currentDate: LocalDate) {
-    val greetingInfo = getGreetingInfo()
+    // REACIVE HOUR: Re-calculated whenever the 30-second heartbeat fires
+    val currentHour = remember(currentDate) { Calendar.getInstance().get(Calendar.HOUR_OF_DAY) }
+    val greetingInfo = getGreetingInfo(currentHour)
+    
     val date = remember(currentDate) { 
         currentDate.format(DateTimeFormatter.ofPattern("EEEE, MMMM d")) 
     }
@@ -381,7 +400,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
             ) {
                 Icon(
                     imageVector = greetingInfo.icon,
-                    contentDescription = "Greeting Icon",
+                    contentDescription = stringResource(R.string.content_desc_greeting_icon),
                     modifier = Modifier.size(80.dp),
                     tint = Color.White.copy(alpha = 0.9f)
                 )
@@ -474,7 +493,7 @@ fun QuickActions(onNewSubjectClick: () -> Unit, onExtraClassClick: () -> Unit) {
     ) {
         QuickActionCard(
             modifier = Modifier.weight(1f),
-            icon = Icons.Default.PlaylistAdd,
+            icon = Icons.AutoMirrored.Filled.PlaylistAdd,
             title = stringResource(R.string.extra_class_dialog_title),
             onClick = onExtraClassClick
         )
@@ -524,6 +543,7 @@ fun QuickActionCard(
 fun TodayScheduleCard(
     scheduleWithSubject: ScheduleWithSubject,
     appViewModel: AppViewModel,
+    date: LocalDate,
     onClick: () -> Unit
 ) {
     val record = scheduleWithSubject.attendanceRecord
@@ -590,7 +610,7 @@ fun TodayScheduleCard(
                                 style = MaterialTheme.typography.titleLarge,
                             )
                             Text(
-                                text = if (isExtra) "Extra Session" else "$startTime - $endTime",
+                                text = if (isExtra) stringResource(R.string.extra_session_label) else "$startTime - $endTime",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -637,39 +657,44 @@ fun TodayScheduleCard(
                         } else {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                FilterChip(
+                                Button(
                                     onClick = { 
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        appViewModel.markTodayAsPresent(subject.id, schedule.id) 
+                                        appViewModel.markDateAsPresent(subject.id, schedule.id, date) 
                                     },
+                                    modifier = Modifier.weight(1f).height(40.dp),
                                     shape = RoundedCornerShape(12.dp),
-                                    selected = false,
-                                    label = { Text(stringResource(R.string.mark_present)) }
-                                )
+                                    contentPadding = PaddingValues(0.dp)
+                                ) {
+                                    Text(stringResource(R.string.mark_present), style = MaterialTheme.typography.labelLarge)
+                                }
                                 OutlinedButton(
                                     onClick = { 
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        appViewModel.markTodayAsAbsent(subject.id, schedule.id) 
+                                        appViewModel.markDateAsAbsent(subject.id, schedule.id, date) 
                                     },
-                                    shape = RoundedCornerShape(12.dp)
+                                    modifier = Modifier.weight(1f).height(40.dp),
+                                    shape = RoundedCornerShape(12.dp),
+                                    contentPadding = PaddingValues(0.dp)
                                 ) {
-                                    Text(stringResource(R.string.mark_absent))
+                                    Text(stringResource(R.string.mark_absent), style = MaterialTheme.typography.labelLarge)
                                 }
                                 IconButton(
                                     onClick = { 
                                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        appViewModel.markTodayAsCancelled(subject.id, schedule.id) 
+                                        appViewModel.markDateAsCancelled(subject.id, schedule.id, date) 
                                     },
+                                    modifier = Modifier.size(40.dp),
                                     colors = IconButtonDefaults.iconButtonColors(
                                         contentColor = MaterialTheme.colorScheme.error
                                     )
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Mark as Cancelled"
+                                        contentDescription = stringResource(R.string.mark_cancelled)
                                     )
                                 }
                             }
@@ -792,7 +817,7 @@ fun SubjectCard(subjectWithAttendance: SubjectWithAttendance, bunkAnalysis: Bunk
             ) {
                 Column {
                     Text(
-                        text = "${percentage.toInt()}%",
+                        text = "%.1f%%".format(percentage),
                         style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.ExtraBold,
                         color = if (percentage < subject.targetAttendance) ErrorRed else SuccessGreen

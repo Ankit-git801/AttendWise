@@ -31,20 +31,27 @@ interface AttendanceDao {
     @Delete
     suspend fun deleteSubject(subject: Subject)
 
-    @Query("SELECT * FROM subjects WHERE id != '0' ORDER BY name ASC")
-    fun getAllSubjects(): Flow<List<Subject>>
+    @Query("SELECT * FROM subjects WHERE id != :holidayId ORDER BY name ASC")
+    fun getAllSubjects(holidayId: String = com.ankit.attendwise.utils.Constants.ID_SUBJECT_HOLIDAY): Flow<List<Subject>>
 
     @Query("SELECT * FROM subjects WHERE id = :subjectId")
     suspend fun getSubjectById(subjectId: String): Subject?
 
-    @Query("SELECT COUNT(*) FROM subjects WHERE id != '0'")
-    suspend fun getSubjectCount(): Int
+    @Query("SELECT COUNT(*) FROM subjects WHERE id != :holidayId")
+    suspend fun getSubjectCount(holidayId: String = com.ankit.attendwise.utils.Constants.ID_SUBJECT_HOLIDAY): Int
 
-    @Query("DELETE FROM subjects WHERE id = :subjectId AND id != '0'")
-    suspend fun deleteSubjectById(subjectId: String)
+    @Query("DELETE FROM subjects WHERE id = :subjectId AND id != :holidayId")
+    suspend fun deleteSubjectById(subjectId: String, holidayId: String = com.ankit.attendwise.utils.Constants.ID_SUBJECT_HOLIDAY)
 
-    @Query("DELETE FROM subjects WHERE id != '0'")
-    suspend fun deleteAllSubjects()
+    @Transaction
+    suspend fun deleteSubjectAtomic(subjectId: String) {
+        deleteAttendanceRecordsForSubject(subjectId)
+        deleteSchedulesForSubject(subjectId)
+        deleteSubjectById(subjectId)
+    }
+
+    @Query("DELETE FROM subjects WHERE id != :holidayId")
+    suspend fun deleteAllSubjects(holidayId: String = com.ankit.attendwise.utils.Constants.ID_SUBJECT_HOLIDAY)
 
 
     // --- Schedule Queries ---
@@ -56,6 +63,9 @@ interface AttendanceDao {
 
     @Query("SELECT * FROM class_schedules")
     fun getAllSchedules(): Flow<List<ClassSchedule>>
+
+    @Query("SELECT * FROM class_schedules WHERE subjectId = :subjectId")
+    fun getSchedulesForSubjectFlow(subjectId: String): Flow<List<ClassSchedule>>
 
     @Query("SELECT * FROM class_schedules WHERE subjectId = :subjectId")
     suspend fun getSchedulesForSubject(subjectId: String): List<ClassSchedule>
@@ -145,9 +155,6 @@ interface AttendanceDao {
     @Query("SELECT * FROM attendance_records WHERE date = :date")
     suspend fun getAllAttendanceRecordsOnDateNow(date: Long): List<AttendanceRecord>
 
-    @Query("SELECT * FROM attendance_records WHERE date = :date AND type != 'HOLIDAY'")
-    suspend fun getAttendanceRecordsOnDateNow(date: Long): List<AttendanceRecord>
-
 
     @Query("DELETE FROM attendance_records WHERE subjectId = :subjectId AND date = :date AND scheduleId = :scheduleId AND type != 'HOLIDAY'")
     suspend fun deleteAttendanceRecordBySchedule(subjectId: String, date: Long, scheduleId: String)
@@ -190,34 +197,40 @@ interface AttendanceDao {
     @Query("SELECT COUNT(*) FROM attendance_records WHERE subjectId = :subjectId AND isPresent = 1 AND (type = 'CLASS' OR type = 'MANUAL')")
     suspend fun getPresentClassesForSubject(subjectId: String): Int
 
-    @Query("""
+    @Query(
+        """
         SELECT 
             COUNT(*) as totalClasses,
             COALESCE(SUM(CASE WHEN isPresent = 1 THEN 1 ELSE 0 END), 0) as totalPresent,
             (COUNT(*) - COALESCE(SUM(CASE WHEN isPresent = 1 THEN 1 ELSE 0 END), 0)) as totalAbsent,
             CASE WHEN COUNT(*) > 0 THEN (CAST(COALESCE(SUM(CASE WHEN isPresent = 1 THEN 1 ELSE 0 END), 0) AS REAL) / COUNT(*)) * 100.0 ELSE 0.0 END as overallPercentage,
-            (SELECT COUNT(*) FROM subjects WHERE id != '0') as subjectCount
+            (SELECT COUNT(*) FROM subjects WHERE id != :holidayId) as subjectCount
         FROM attendance_records 
         WHERE type = 'CLASS' OR type = 'MANUAL'
-    """)
-    fun getOverallStatisticsFlow(): Flow<AttendanceStatistics>
+    """
+    )
+    fun getOverallStatisticsFlow(holidayId: String = com.ankit.attendwise.utils.Constants.ID_SUBJECT_HOLIDAY): Flow<AttendanceStatistics>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT s.*,
                (SELECT COUNT(*) FROM attendance_records WHERE subjectId = s.id AND (type = 'CLASS' OR type = 'MANUAL')) as totalClasses,
                (SELECT COUNT(*) FROM attendance_records WHERE subjectId = s.id AND isPresent = 1 AND (type = 'CLASS' OR type = 'MANUAL')) as presentClasses
         FROM subjects s
-        WHERE s.id != '0'
-    """)
-    fun getSubjectsWithAttendance(): Flow<List<SubjectWithAttendance>>
+        WHERE s.id != :holidayId
+    """
+    )
+    fun getSubjectsWithAttendance(holidayId: String = com.ankit.attendwise.utils.Constants.ID_SUBJECT_HOLIDAY): Flow<List<SubjectWithAttendance>>
 
     @Transaction
-    @Query("""
+    @Query(
+        """
         SELECT ar.*, s.name as subjectName, s.color as subjectColor
         FROM attendance_records ar
         LEFT JOIN subjects s ON ar.subjectId = s.id
         WHERE ar.date = :date AND ar.type != 'HOLIDAY'
-    """)
+    """
+    )
     fun getRecordsForDateWithSubject(date: Long): Flow<List<AttendanceRecordWithSubject>>
 }

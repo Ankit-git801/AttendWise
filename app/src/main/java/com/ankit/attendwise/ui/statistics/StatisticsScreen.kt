@@ -26,11 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.ankit.attendwise.R
 import com.ankit.attendwise.models.AttendanceStatistics
 import com.ankit.attendwise.models.SubjectWithAttendance
 import com.ankit.attendwise.ui.theme.ErrorRed
@@ -49,7 +50,7 @@ fun StatisticsScreen(navController: NavController, appViewModel: AppViewModel) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Statistics", fontWeight = FontWeight.Bold) }
+                title = { Text(stringResource(R.string.nav_stats), fontWeight = FontWeight.Bold) }
             )
         }
     ) { paddingValues ->
@@ -73,7 +74,7 @@ fun StatisticsScreen(navController: NavController, appViewModel: AppViewModel) {
 
                 item {
                     Text(
-                        "Subject Breakdown",
+                        stringResource(R.string.section_subject_breakdown),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 16.dp, start = 4.dp)
@@ -112,13 +113,13 @@ private fun EmptyState(modifier: Modifier = Modifier) {
         )
         Spacer(Modifier.height(24.dp))
         Text(
-            "No Statistics Yet",
+            stringResource(R.string.no_stats_title),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "Add subjects and mark attendance to see your progress here. Your overall and subject-wise statistics will appear once you have some data.",
+            stringResource(R.string.no_stats_subtitle),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -131,7 +132,7 @@ private fun OverallPerformanceCard(stats: AttendanceStatistics, target: Float) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(24.dp)) {
             Text(
-                "Overall Performance",
+                stringResource(R.string.section_overall_performance),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -145,18 +146,18 @@ private fun OverallPerformanceCard(stats: AttendanceStatistics, target: Float) {
             Spacer(Modifier.height(24.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 StatItem(
-                    label = "Total",
+                    label = stringResource(R.string.stat_total),
                     value = stats.totalClasses.toString(),
                     icon = Icons.Default.Functions
                 )
                 StatItem(
-                    label = "Present",
+                    label = stringResource(R.string.mark_present),
                     value = stats.totalPresent.toString(),
                     color = SuccessGreen,
                     icon = Icons.Default.CheckCircle
                 )
                 StatItem(
-                    label = "Absent",
+                    label = stringResource(R.string.mark_absent),
                     value = stats.totalAbsent.toString(),
                     color = ErrorRed,
                     icon = Icons.Default.Cancel
@@ -205,7 +206,7 @@ private fun DonutChart(
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
-            Text("Present", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(R.string.mark_present), style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -263,7 +264,7 @@ private fun SubjectStatCard(
             Column(Modifier.weight(1f)) {
                 Text(subject.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                 Text(
-                    "Target: ${subject.targetAttendance}%",
+                    stringResource(R.string.label_attendance_target) + ": ${subject.targetAttendance}%",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

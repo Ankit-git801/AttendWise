@@ -15,10 +15,9 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         if (action == Intent.ACTION_BOOT_COMPLETED || 
-            action == "android.intent.action.MY_PACKAGE_REPLACED" ||
+            action == Intent.ACTION_MY_PACKAGE_REPLACED ||
             action == Intent.ACTION_TIMEZONE_CHANGED ||
-            action == "android.intent.action.TIME_SET" ||
-            action == "android.intent.action.TIME_CHANGED") {
+            action == Intent.ACTION_TIME_CHANGED) {
             
             val pendingResult = goAsync()
             // It's safe to launch a coroutine here to do the work off the main thread

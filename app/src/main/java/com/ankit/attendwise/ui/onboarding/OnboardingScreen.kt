@@ -11,6 +11,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Login
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -144,7 +146,7 @@ fun OnboardingScreen(appViewModel: AppViewModel, onComplete: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth().height(56.dp),
                                 shape = RoundedCornerShape(24.dp)
                             ) {
-                                Icon(Icons.Default.Login, contentDescription = null)
+                                Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(stringResource(R.string.action_sign_in), fontWeight = FontWeight.Bold, fontSize = 18.sp)
                             }
@@ -157,7 +159,7 @@ fun OnboardingScreen(appViewModel: AppViewModel, onComplete: () -> Unit) {
                             ) {
                                 Text(stringResource(R.string.action_signup_later), style = MaterialTheme.typography.bodyMedium)
                                 Spacer(modifier = Modifier.width(4.dp))
-                                Icon(Icons.Default.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(16.dp))
                             }
                         }
 

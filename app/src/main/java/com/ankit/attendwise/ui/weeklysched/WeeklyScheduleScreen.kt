@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.EventNote
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -14,8 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.ankit.attendwise.R
 import com.ankit.attendwise.models.ScheduleWithSubject
 import com.ankit.attendwise.utils.ColorUtils
 import com.ankit.attendwise.viewmodel.AppViewModel
@@ -30,10 +32,10 @@ fun WeeklyScheduleScreen(navController: NavController, appViewModel: AppViewMode
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Weekly Schedule") },
+                title = { Text(stringResource(R.string.setting_weekly_schedule)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 }
             )
@@ -101,7 +103,7 @@ private fun ScheduleItem(schedule: ScheduleWithSubject) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = schedule.subject.name ?: "Unknown",
+                    text = schedule.subject.name,
                     style = MaterialTheme.typography.bodyLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -128,24 +130,24 @@ private fun EmptyScheduleState(navController: NavController, modifier: Modifier 
         ) {
             Icon(
                 imageVector = Icons.Outlined.EventNote,
-                contentDescription = "No Schedule",
+                contentDescription = stringResource(R.string.no_schedules_text),
                 modifier = Modifier.size(64.dp),
                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
             )
             Text(
-                text = "No Classes Scheduled",
+                text = stringResource(R.string.no_classes_title),
                 style = MaterialTheme.typography.headlineSmall,
                 textAlign = TextAlign.Center
             )
             Text(
-                text = "Your weekly schedule is empty. Add a subject and its class timings to see them here.",
+                text = stringResource(R.string.no_schedules_text),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = { navController.navigate("add_subject") }) {
-                Text("Add a Subject")
+                Text(stringResource(R.string.action_add_subject))
             }
         }
     }

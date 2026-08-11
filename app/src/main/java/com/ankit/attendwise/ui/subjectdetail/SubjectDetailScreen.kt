@@ -15,8 +15,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronLeft
@@ -25,7 +26,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EventBusy
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.PlaylistAdd
 import androidx.compose.material.icons.filled.RemoveCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -88,6 +88,8 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
 
     val attendanceRecords by appViewModel.getAttendanceRecordsForSubject(subjectId).collectAsStateWithLifecycle(initialValue = emptyList())
     val allAttendanceRecords by appViewModel.allAttendanceRecords.collectAsStateWithLifecycle()
+    
+    val subjectSchedules by appViewModel.getSchedulesForSubjectFlow(subjectId).collectAsStateWithLifecycle(initialValue = emptyList())
 
     var recordToDelete by remember { mutableStateOf<String?>(null) }
     var clearAllDateRecords by remember { mutableStateOf<LocalDate?>(null) }
@@ -163,17 +165,31 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
         val recordsForSelectedDate = remember(date, attendanceRecords) {
             attendanceRecords.filter { it.date == date.toEpochDay() }
         }
-        val isHoliday = allAttendanceRecords.any { it.date == date.toEpochDay() && it.type == RecordType.HOLIDAY }
+        val isHoliday = allAttendanceRecords.any { (it.date == date.toEpochDay()) && (it.type == RecordType.HOLIDAY) }
+        
+        // Find schedules for this subject on this specific day
+        val calendarDayOfWeek = (date.dayOfWeek.value % 7) + 1
+        val schedulesForDay = remember(date, subjectSchedules) {
+            subjectSchedules.filter { it.dayOfWeek == calendarDayOfWeek }
+        }
+
         MarkAttendanceDialog(
             date = date,
             recordsForDay = recordsForSelectedDate,
+            schedulesForDay = schedulesForDay,
             isHoliday = isHoliday,
             onDismiss = { showMarkAttendanceDialog = null },
-            onConfirm = { isPresent ->
-                appViewModel.updateAttendanceRecord(subjectId, date, isPresent)
+            onConfirm = { isPresent, scheduleId ->
+                if (scheduleId != null) {
+                    if (isPresent) appViewModel.markDateAsPresent(subjectId, scheduleId, date)
+                    else appViewModel.markDateAsAbsent(subjectId, scheduleId, date)
+                } else {
+                    appViewModel.updateAttendanceRecord(subjectId, date, isPresent)
+                }
             },
-            onConfirmCancelled = {
-                appViewModel.markDateAsCancelled(subjectId, date)
+            onConfirmCancelled = { scheduleId ->
+                if (scheduleId != null) appViewModel.markDateAsCancelled(subjectId, scheduleId, date)
+                else appViewModel.markDateAsCancelled(subjectId, date)
             },
             onToggleHoliday = {
                 appViewModel.onHolidayToggleRequested(date)
@@ -184,14 +200,10 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
         )
     }
 
-    // AUTO-EXIT: If subject is deleted via sync, go back to prevent crash.
-    LaunchedEffect(subjectWithAttendance) {
-        if (subjectWithAttendance == null) {
-            // Give a small grace period to account for DB loading/syncing
-            kotlinx.coroutines.delay(1000)
-            if (subjectWithAttendance == null) {
-                navController.popBackStack()
-            }
+    // AUTO-EXIT: Only close if the subject is truly gone (not just loading)
+    LaunchedEffect(subjectsWithAttendance) {
+        if (subjectsWithAttendance.isNotEmpty() && subjectsWithAttendance.none { it.subject.id == subjectId }) {
+            navController.popBackStack()
         }
     }
 
@@ -201,15 +213,15 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
                 title = { Text(subjectWithAttendance?.subject?.name ?: stringResource(R.string.subject_details_title)) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = stringResource(R.string.action_back))
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.action_back))
                     }
                 },
                 actions = {
                     IconButton(onClick = { showManualAddDialog = true }) {
-                        Icon(Icons.Default.PlaylistAdd, contentDescription = null)
+                        Icon(Icons.AutoMirrored.Filled.PlaylistAdd, contentDescription = null)
                     }
                     IconButton(onClick = {
-                        navController.navigate("edit_subject/${subjectId}")
+                        navController.navigate("edit_subject/$subjectId")
                     }) {
                         Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.action_edit))
                     }
@@ -322,10 +334,11 @@ fun ManualAddAttendanceDialog(onDismiss: () -> Unit, onConfirm: (present: Int, a
 fun MarkAttendanceDialog(
     date: LocalDate,
     recordsForDay: List<AttendanceRecord>,
+    schedulesForDay: List<com.ankit.attendwise.data.ClassSchedule>,
     isHoliday: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (Boolean) -> Unit,
-    onConfirmCancelled: () -> Unit,
+    onConfirm: (Boolean, String?) -> Unit,
+    onConfirmCancelled: (String?) -> Unit,
     onToggleHoliday: () -> Unit,
     onDeleteMain: () -> Unit,
     onDeleteRecord: (String) -> Unit,
@@ -336,7 +349,9 @@ fun MarkAttendanceDialog(
         title = { Text(date.toString(), fontWeight = FontWeight.Bold) },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (isHoliday) {
@@ -365,9 +380,8 @@ fun MarkAttendanceDialog(
                     }
                 }
 
-                if (recordsForDay.isEmpty()) {
-                    Text("No attendance marked for this day.")
-                } else {
+                if (recordsForDay.isNotEmpty()) {
+                    Text(stringResource(R.string.attendance_history_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     recordsForDay.forEach { record ->
                         Row(
                             modifier = Modifier
@@ -399,16 +413,47 @@ fun MarkAttendanceDialog(
                             }
                         }
                     }
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
                 }
 
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                if (!isHoliday) {
+                    if (schedulesForDay.isNotEmpty()) {
+                        Text(stringResource(R.string.scheduled_sessions_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                        schedulesForDay.forEach { schedule ->
+                            val timeStr = formatTime(schedule.startHour, schedule.startMinute) + " - " + formatTime(schedule.endHour, schedule.endMinute)
+                            Column(modifier = Modifier.fillMaxWidth()) {
+                                Text(timeStr, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    IconButton(onClick = { onConfirm(true, schedule.id) }) {
+                                        Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.mark_present), tint = SuccessGreen)
+                                    }
+                                    IconButton(onClick = { onConfirm(false, schedule.id) }) {
+                                        Icon(Icons.Default.Cancel, contentDescription = stringResource(R.string.mark_absent), tint = ErrorRed)
+                                    }
+                                    IconButton(onClick = { onConfirmCancelled(schedule.id) }) {
+                                        Icon(Icons.Default.EventBusy, contentDescription = stringResource(R.string.mark_cancelled), tint = MaterialTheme.colorScheme.outline)
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Text(stringResource(R.string.no_schedules_text), style = MaterialTheme.typography.bodySmall)
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(onClick = { onConfirm(true, null) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.mark_present))
+                            }
+                            Button(onClick = { onConfirm(false, null) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
+                                Text(stringResource(R.string.mark_absent))
+                            }
+                        }
+                    }
 
-                Text("Quick Actions", style = MaterialTheme.typography.labelLarge, color = if (isHoliday) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f) else MaterialTheme.colorScheme.primary)
-                AttendanceActionRow(Icons.Default.CheckCircle, stringResource(R.string.mark_present), { onConfirm(true); onDismiss() }, true, enabled = !isHoliday)
-                AttendanceActionRow(Icons.Default.Cancel, stringResource(R.string.mark_absent), { onConfirm(false); onDismiss() }, false, enabled = !isHoliday)
-                AttendanceActionRow(Icons.Default.AddCircle, "Add Extra Class (Present)", { onAddExtra(true); onDismiss() }, true, enabled = !isHoliday)
-                AttendanceActionRow(Icons.Default.RemoveCircle, "Add Extra Class (Absent)", { onAddExtra(false); onDismiss() }, false, enabled = !isHoliday)
-                AttendanceActionRow(Icons.Default.EventBusy, "Mark as Cancelled", { onConfirmCancelled(); onDismiss() }, false, MaterialTheme.colorScheme.outline, enabled = !isHoliday)
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                    Text(stringResource(R.string.quick_actions_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    AttendanceActionRow(Icons.Default.AddCircle, stringResource(R.string.action_add_extra_present), { onAddExtra(true); onDismiss() }, true)
+                    AttendanceActionRow(Icons.Default.RemoveCircle, stringResource(R.string.action_add_extra_absent), { onAddExtra(false); onDismiss() }, false)
+                }
             }
         },
         confirmButton = {
@@ -425,6 +470,14 @@ fun MarkAttendanceDialog(
             ) { Text(stringResource(R.string.action_close)) } 
         }
     )
+}
+
+private fun formatTime(hour: Int, minute: Int): String {
+    val calendar = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, minute)
+    }
+    return java.text.SimpleDateFormat("h:mm a", Locale.getDefault()).format(calendar.time)
 }
 
 @Composable
@@ -531,7 +584,7 @@ fun BunkAnalysisCard(analysis: BunkAnalysis, subject: Subject) {
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.Info, contentDescription = "Bunk analysis", tint = color)
+            Icon(Icons.Default.Info, contentDescription = stringResource(R.string.content_desc_bunk_analysis), tint = color)
             Spacer(Modifier.width(12.dp))
             Text(text = text, style = MaterialTheme.typography.bodyMedium, color = color, fontWeight = FontWeight.Medium)
         }
@@ -598,11 +651,11 @@ fun AttendanceCalendar(
 
     // PERFORMANCE FIX: Pre-process records into a Map for O(1) lookup during day rendering
     val recordsByDate = remember(subjectRecords) {
-        subjectRecords.groupBy { it.date }
+        subjectRecords.asSequence().groupBy { it.date }
     }
     
     val holidaysByDate = remember(allRecords) {
-        allRecords.filter { it.type == RecordType.HOLIDAY }.associateBy { it.date }
+        allRecords.asSequence().filter { it.type == RecordType.HOLIDAY }.associateBy { it.date }
     }
 
     Column {

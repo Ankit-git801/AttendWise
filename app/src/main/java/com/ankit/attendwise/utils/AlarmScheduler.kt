@@ -15,37 +15,20 @@ import java.time.LocalTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
-import java.util.*
 
 object AlarmScheduler {
     private const val TAG = "AlarmScheduler"
+    const val ACTION_CLASS_REMINDER = "com.ankit.attendwise.ACTION_CLASS_REMINDER"
 
     fun scheduleClassAlarm(context: Context, subject: Subject, schedule: ClassSchedule, forceNextWeek: Boolean = false) {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-
-        val intent = Intent(context, AlarmReceiver::class.java).apply {
-            putExtra("subject_id", subject.id)
-            putExtra("schedule_id", schedule.id)
-        }
-
-        val requestCode = schedule.id.hashCode()
-        val pendingIntent = PendingIntent.getBroadcast(
-            context,
-            requestCode,
-            intent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // SAFETY GUARD: Prevent crash if data is malformed
-        if (schedule.dayOfWeek !in 1..7 || schedule.endHour !in 0..23 || schedule.endMinute !in 0..59) {
-            Log.w(TAG, "Skipping invalid schedule for ${subject.name}: Day=${schedule.dayOfWeek}, Time=${schedule.endHour}:${schedule.endMinute}")
-            return
-        }
 
         // MODERN FIX: Using java.time for robust scheduling
         // Convert Calendar day (1=Sun, 2=Mon) to java.time.DayOfWeek (1=Mon, 7=Sun)
         val targetDayOfWeek = if (schedule.dayOfWeek == 1) DayOfWeek.SUNDAY else DayOfWeek.of(schedule.dayOfWeek - 1)
         val targetTime = LocalTime.of(schedule.endHour, schedule.endMinute)
+        val startTime = LocalTime.of(schedule.startHour, schedule.startMinute)
+        val isOvernight = targetTime.isBefore(startTime) || (targetTime == startTime)
         
         val now = LocalDateTime.now()
         var alarmDateTime = if (forceNextWeek) {
@@ -58,14 +41,44 @@ object AlarmScheduler {
             .withSecond(0)
             .withNano(0)
 
-        // If the calculated time for today has already passed, schedule for next week
-        if (!forceNextWeek && alarmDateTime.isBefore(now.plusSeconds(10))) {
-            alarmDateTime = alarmDateTime.with(TemporalAdjusters.next(targetDayOfWeek))
+        // The session date is the date the class STARTS.
+        // For non-overnight, sessionDate = alarmDate.
+        // For overnight, the alarm fires on sessionDate + 1, so sessionDate = alarmDate - 1.
+        var sessionDate = alarmDateTime.toLocalDate()
+        if (isOvernight) {
+            alarmDateTime = alarmDateTime.plusDays(1)
         }
+
+        // If the calculated time has already passed, schedule for next week
+        if (!forceNextWeek && alarmDateTime.isBefore(now.plusSeconds(10))) {
+            alarmDateTime = now.with(TemporalAdjusters.next(targetDayOfWeek))
+            sessionDate = alarmDateTime.toLocalDate()
+            
+            // Re-apply time and overnight adjustment if we jumped to next week
+            alarmDateTime = alarmDateTime.with(targetTime).withSecond(0).withNano(0)
+            if (isOvernight) {
+                alarmDateTime = alarmDateTime.plusDays(1)
+            }
+        }
+
+        val alarmIntent = Intent(context, AlarmReceiver::class.java).apply {
+            action = ACTION_CLASS_REMINDER
+            putExtra("subject_id", subject.id)
+            putExtra("schedule_id", schedule.id)
+            putExtra("EXTRA_SESSION_DATE", sessionDate.toEpochDay())
+        }
+
+        val requestCode = schedule.id.hashCode()
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            requestCode,
+            alarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
 
         val triggerTimeMs = alarmDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-        Log.d(TAG, "Scheduling alarm for ${subject.name ?: "Unknown"} at: ${alarmDateTime.format(formatter)}")
+        Log.d(TAG, "Scheduling alarm for ${subject.name} at: ${alarmDateTime.format(formatter)}")
 
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -74,9 +87,14 @@ object AlarmScheduler {
                     return
                 }
             }
+
+            // CRITICAL FIX: Use setAlarmClock for absolute precision. 
+            // It is the highest priority alarm and forces the device to wake up exactly on time, 
+            // even if the system is restricting other background activities.
             val clockInfo = AlarmManager.AlarmClockInfo(triggerTimeMs, null)
             alarmManager.setAlarmClock(clockInfo, pendingIntent)
-            Log.d(TAG, "Alarm successfully set.")
+            
+            Log.d(TAG, "Alarm successfully set for: ${subject.name}")
         } catch (e: Exception) {
             Log.e(TAG, "Error scheduling alarm: ${e.message}")
         }

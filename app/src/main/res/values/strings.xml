@@ -22,6 +22,7 @@
     <string name="action_later">Later</string>
     <string name="action_discard">Discard</string>
     <string name="action_confirm">Confirm</string>
+    <string name="action_proceed">Proceed</string>
     <string name="feedback_extra_class_added">Extra class added successfully</string>
     <string name="feedback_past_records_added">Past records added successfully</string>
     <string name="feedback_attendance_updated">Attendance record updated</string>
@@ -46,11 +47,18 @@
     <string name="greeting_evening">Good Evening</string>
     <string name="greeting_student">Student</string>
     <string name="section_todays_classes">TODAY\'S CLASSES</string>
+    <string name="section_tomorrows_classes">TOMORROW\'S PREVIEW</string>
     <string name="section_all_subjects">ALL SUBJECTS</string>
+    <string name="section_overall_performance">Overall Performance</string>
+    <string name="section_subject_breakdown">Subject Breakdown</string>
     <string name="holiday_title">Public Holiday</string>
     <string name="holiday_subtitle">Today is marked as a holiday. All classes are suspended. Enjoy your break!</string>
     <string name="no_classes_title">No Classes Today</string>
     <string name="no_classes_subtitle">You have no classes scheduled for today.</string>
+    <string name="no_classes_tomorrow_title">No Classes Tomorrow</string>
+    <string name="no_classes_tomorrow_subtitle">You have no classes scheduled for tomorrow.</string>
+    <string name="no_stats_title">No Statistics Yet</string>
+    <string name="no_stats_subtitle">Add subjects and mark attendance to see your progress here. Your overall and subject-wise statistics will appear once you have some data.</string>
     <string name="no_subjects_title">No Subjects Yet</string>
     <string name="no_subjects_subtitle">Add your subjects to start tracking your attendance.</string>
     <string name="action_add_subject">Add Subject</string>
@@ -59,8 +67,34 @@
     <string name="extra_class_subject">Subject</string>
     <string name="extra_class_status">Status</string>
     <string name="extra_class_count">Count</string>
+    <string name="scheduled_sessions_label">Scheduled Sessions</string>
+    <string name="quick_actions_label">Quick Actions</string>
+    <string name="action_add_extra_present">Add Extra Class (Present)</string>
+    <string name="action_add_extra_absent">Add Extra Class (Absent)</string>
     <string name="live_badge">LIVE</string>
     <string name="attendance_label">Attendance</string>
+    <string name="attendance_for_label">Attendance for %1$s</string>
+    <string name="notification_question">Did you attend the class?</string>
+    <string name="notification_marked_text">Attendance marked. New percentage: %1$.1f%%</string>
+    <string name="notification_cancelled_text">Class Cancelled.</string>
+    <string name="notification_warning_text">Your attendance for %1$s has dropped to %2$.1f%%.</string>
+    <string name="no_records_day">No records for this day</string>
+    <string name="action_show_preview">Show Preview</string>
+    <string name="action_show_today">Show Today</string>
+    <string name="notification_action_present">Present</string>
+    <string name="notification_action_absent">Absent</string>
+    <string name="notification_action_cancel">Cancel</string>
+    <string name="label_select_subject">Select Subject</string>
+    <string name="label_unknown">Unknown</string>
+    <string name="content_desc_prev_month">Previous Month</string>
+    <string name="content_desc_next_month">Next Month</string>
+    <string name="content_desc_selected">Selected</string>
+    <string name="content_desc_greeting_icon">Greeting Icon</string>
+    <string name="content_desc_bunk_analysis">Bunk analysis</string>
+    <string name="extra_session_label">Extra Session</string>
+    <string name="dialog_mark_holiday_title">Mark as Holiday?</string>
+    <string name="dialog_mark_holiday_text">This will remove all attendance records for this date. Do you want to proceed?</string>
+    <string name="error_no_subjects">No subjects added</string>
 
     <!-- Settings Screen -->
     <string name="settings_title">Settings</string>
@@ -78,8 +112,6 @@
     <string name="setting_send_feedback_subtitle">Report bugs or suggest features</string>
     <string name="setting_delete_data">Delete All Data</string>
     <string name="setting_delete_data_subtitle">Remove all subjects and records</string>
-    <string name="setting_battery_optimization">Battery Optimization</string>
-    <string name="setting_battery_optimization_subtitle">Required for reliable notifications</string>
     <string name="setting_exact_alarms">Exact Alarms</string>
     <string name="setting_exact_alarms_subtitle">Ensure reminders fire on time</string>
     <string name="dialog_delete_all_title">Delete All Data?</string>
@@ -116,6 +148,8 @@
     <string name="action_sign_in">Sign In</string>
     <string name="error_no_email_app">No email app found</string>
     <string name="error_holiday_manual_mark">Cannot mark attendance: This day is marked as a Holiday.</string>
+    <string name="feedback_no_classes_tomorrow">No classes scheduled for tomorrow.</string>
+    <string name="feedback_tomorrow_is_holiday">Tomorrow is marked as a Public Holiday.</string>
     <string name="dialog_extra_class_confirm_title">Confirm Extra Class</string>
     <string name="dialog_extra_class_confirm_text">Are you sure you want to add %1$d extra class(es) for %2$s?</string>
 
@@ -162,17 +196,37 @@
     <string name="label_start_time">Start Time</string>
     <string name="label_end_time">End Time</string>
     <string name="label_day_of_week">Day of the week</string>
+    <string name="day_mon">Mon</string>
+    <string name="day_tue">Tue</string>
+    <string name="day_wed">Wed</string>
+    <string name="day_thu">Thu</string>
+    <string name="day_fri">Fri</string>
+    <string name="day_sat">Sat</string>
+    <string name="day_sun">Sun</string>
 
     <!-- Onboarding -->
     <string name="welcome_title">Welcome to\nAttendWise</string>
     <string name="welcome_subtitle">Stay organized and never miss a target. Choose how you want to start.</string>
     <string name="action_signup_later">Sign Up Later (Offline Mode)</string>
+    <string name="action_update_now">Update Now</string>
+    <string name="action_open_settings">Open Settings</string>
+    <string name="action_open_app_settings">Open App Settings</string>
+    <string name="action_already_done">I\'ve already done this</string>
+    <string name="action_allow">Allow</string>
     <string name="personalize_title">Personalize Your App</string>
     <string name="personalize_subtitle">What should we call you?</string>
     <string name="label_enter_name">Enter Your Name</string>
     <string name="action_get_started">Get Started</string>
 
+    <!-- Update Dialog -->
+    <string name="update_required_title">Update Required</string>
+    <string name="update_required_text">This version of AttendWise is no longer supported. Please update to the latest version from the Play Store to continue.</string>
+    <string name="update_available_title">Update Available</string>
+    <string name="update_available_text">A newer version of AttendWise is available. Please update to get the latest features and bug fixes.</string>
+
     <!-- Permissions -->
     <string name="perm_notifications_rationale_title">Enable Notifications</string>
     <string name="perm_notifications_rationale_text">Allow notifications to receive class reminders and mark your attendance directly from your lock screen or notification shade.</string>
+    <string name="perm_exact_alarm_title">Permission Required</string>
+    <string name="perm_exact_alarm_text">This app needs permission to set precise alarms for class reminders. Please enable \'Alarms &amp; reminders\' in the settings.</string>
 </resources>
