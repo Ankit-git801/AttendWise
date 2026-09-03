@@ -40,7 +40,11 @@ class GlobalExceptionHandler {
     
     @ExceptionHandler(Exception::class)
     fun handleGeneral(e: Exception): ResponseEntity<Map<String, String>> {
-        e.printStackTrace() // Log the stack trace to help diagnose 500 errors
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to "An unexpected error occurred: ${e.message}"))
+        e.printStackTrace() // Log full trace on server logs
+        val userFriendlyMessage = when {
+            e.message?.contains("Mongo") == true || e.message?.contains("Timed out") == true -> "Database connection error. Please try again."
+            else -> "An unexpected error occurred. Please try again."
+        }
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(mapOf("error" to userFriendlyMessage))
     }
 }
