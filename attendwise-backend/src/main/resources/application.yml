@@ -2,6 +2,7 @@ spring:
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/attendwise}
+      auto-index-creation: true
   application:
     name: attendwise-backend
 
