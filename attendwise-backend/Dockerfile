@@ -1,10 +1,8 @@
-# Build stage
-FROM eclipse-temurin:17-jdk-alpine AS build
+# Build stage using pre-installed Gradle
+FROM gradle:8.5-jdk17-alpine AS build
 WORKDIR /app
-COPY gradle/ gradle/
-COPY gradlew gradlew.bat settings.gradle.kts build.gradle.kts ./
-COPY src/ src/
-RUN chmod +x gradlew && ./gradlew bootJar --no-daemon -x test
+COPY . .
+RUN gradle bootJar --no-daemon -x test
 
 # Run stage
 FROM eclipse-temurin:17-jre-alpine
