@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.attendwise.backend.StatisticsIntegrationTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-09-01T11:36:13.524Z" hostname="LAPTOP-BQ0TIM0F" time="0.907">
+  <properties/>
+  <testcase name="test overall statistics calculation()" classname="com.attendwise.backend.StatisticsIntegrationTest" time="0.282"/>
+  <testcase name="test subject statistics and bunk analysis()" classname="com.attendwise.backend.StatisticsIntegrationTest" time="0.321"/>
+  <testcase name="test zero classes case()" classname="com.attendwise.backend.StatisticsIntegrationTest" time="0.148"/>
+  <testcase name="test statistics for non-existent subject()" classname="com.attendwise.backend.StatisticsIntegrationTest" time="0.136"/>
+  <system-out><![CDATA[2026-09-01T17:06:13.529+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.attendwise.backend.StatisticsIntegrationTest]: StatisticsIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-01T17:06:13.535+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.attendwise.backend.BackendApplication for test class com.attendwise.backend.StatisticsIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

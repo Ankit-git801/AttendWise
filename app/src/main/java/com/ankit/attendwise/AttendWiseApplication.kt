@@ -1,23 +1,44 @@
 package com.ankit.attendwise
 
 import android.app.Application
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.FirebaseFirestoreSettings
-import com.google.firebase.firestore.PersistentCacheSettings
+import com.ankit.attendwise.data.AppDatabase
+import com.ankit.attendwise.data.local.LocalDataSource
+import com.ankit.attendwise.data.remote.RemoteDataSource
+import com.ankit.attendwise.data.remote.RetrofitClient
+import com.ankit.attendwise.data.remote.SessionManager
+import com.ankit.attendwise.data.repository.AttendWiseRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class AttendWiseApplication : Application() {
+
+    lateinit var repository: AttendWiseRepository
+        private set
+
+    lateinit var sessionManager: SessionManager
+        private set
+    
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override fun onCreate() {
         super.onCreate()
-        
-        // Optimize Firestore for offline usage
-        val db = FirebaseFirestore.getInstance()
-        val settings = FirebaseFirestoreSettings.Builder()
-            .setLocalCacheSettings(
-                PersistentCacheSettings.newBuilder()
-                    .setSizeBytes(100 * 1024 * 1024) // 100 MB cache
-                    .build()
-            )
-            .build()
-        db.firestoreSettings = settings
+
+        // Initialize Session Manager
+        sessionManager = SessionManager(this)
+
+        // Sync token with Retrofit Client
+        applicationScope.launch {
+            sessionManager.jwtToken.collect { token ->
+                RetrofitClient.setAuthToken(token)
+            }
+        }
+
+        // Initialize Repository
+        val database = AppDatabase.getDatabase(this)
+        val localDataSource = LocalDataSource(database.attendanceDao(), database.pendingOperationDao())
+        val remoteDataSource = RemoteDataSource(RetrofitClient.api)
+        repository = AttendWiseRepository(localDataSource, remoteDataSource, sessionManager)
     }
 }

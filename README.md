@@ -7,7 +7,7 @@ AttendWise is a professional, high-integrity attendance management application f
 *   🎯 **Attendance Targeting:** Set personalized goals (e.g., 75%, 85%) for each subject.
 *   📊 **Bunk Analysis:** Advanced mathematical engine that calculates exactly how many classes you can safely miss or must attend to reach your target.
 *   ⏰ **Intelligent Reminders:** Automated notifications fire precisely at the end of your scheduled classes.
-*   ☁️ **Hardened Cloud Sync:** Seamless real-time synchronization across multiple devices with built-in conflict resolution and atomic transactions.
+*   ☁️ **Hardened Cloud Sync:** Robust REST-based synchronization with a Spring Boot backend, featuring offline-first support and conflict-resilient data restoration.
 *   🗓️ **Dynamic Calendar:** A complete visual history of your attendance, including public holiday management and class cancellation support.
 *   🚀 **High Performance:** Optimized for the latest Android versions, featuring extremely low battery impact and buttery-smooth Jetpack Compose UI.
 
@@ -39,10 +39,11 @@ The codebase has undergone 13 rigorous phases of architectural refinement and st
 
 *   **Language:** Kotlin
 *   **UI Toolkit:** Jetpack Compose (Material 3)
-*   **Database:** Room (SQLite) with Reactive Flow and high-precision SQL joins.
-*   **Backend:** Firebase Authentication & Cloud Firestore (Real-time listener architecture).
+*   **Local Database:** Room (SQLite) with Reactive Flow and high-precision SQL joins.
+*   **Backend:** Kotlin Spring Boot REST API with Spring Security (JWT).
+*   **Cloud Database:** MongoDB Atlas.
+*   **Networking:** Retrofit & OkHttp.
 *   **Concurrency:** Kotlin Coroutines with specialized Mutex protection for sync operations.
-*   **Analytics:** Firebase Analytics for feature usage tracking.
 
 ## 🛡 Permissions
 

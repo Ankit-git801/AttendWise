@@ -60,6 +60,10 @@ import com.ankit.attendwise.viewmodel.AppViewModel
 import android.widget.Toast
 import kotlinx.coroutines.flow.collectLatest
 import com.ankit.attendwise.ui.components.RequestAllPermissions
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     private lateinit var viewModel: AppViewModel
@@ -71,6 +75,13 @@ class MainActivity : ComponentActivity() {
         NotificationHelper.createNotificationChannel(this)
         
         viewModel = androidx.lifecycle.ViewModelProvider(this)[AppViewModel::class.java]
+
+        // Sync data on app resume
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewModel.syncData()
+            }
+        }
 
         setContent {
             val appViewModel = viewModel

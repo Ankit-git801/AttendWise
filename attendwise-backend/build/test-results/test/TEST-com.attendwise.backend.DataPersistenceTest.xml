@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.attendwise.backend.DataPersistenceTest" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-09-01T11:36:12.358Z" hostname="LAPTOP-BQ0TIM0F" time="1.164">
+  <properties/>
+  <testcase name="test full data persistence flow()" classname="com.attendwise.backend.DataPersistenceTest" time="0.113"/>
+  <system-out><![CDATA[2026-09-01T17:06:12.360+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.attendwise.backend.DataPersistenceTest]: DataPersistenceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-01T17:06:12.362+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.attendwise.backend.BackendApplication for test class com.attendwise.backend.DataPersistenceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.3)
+
+2026-09-01T17:06:12.419+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] c.a.backend.DataPersistenceTest          : Starting DataPersistenceTest using Java 17.0.20.1 with PID 12164 (started by ak759 in C:\Users\ak759\StudioProjects\AttendWise\attendwise-backend)
+2026-09-01T17:06:12.420+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] c.a.backend.DataPersistenceTest          : No active profile set, falling back to 1 default profile: "default"
+2026-09-01T17:06:12.801+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data MongoDB repositories in DEFAULT mode.
+2026-09-01T17:06:12.832+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 30 ms. Found 4 MongoDB repository interfaces.
+2026-09-01T17:06:12.952+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] org.mongodb.driver.client                : MongoClient with metadata {"driver": {"name": "mongo-java-driver|sync|spring-boot", "version": "5.0.1"}, "os": {"type": "Windows", "name": "Windows 11", "architecture": "amd64", "version": "10.0"}, "platform": "Java/Eclipse Adoptium/17.0.20.1+1"} created with settings MongoClientSettings{readPreference=primary, writeConcern=WriteConcern{w=null, wTimeout=null ms, journal=null}, retryWrites=true, retryReads=true, readConcern=ReadConcern{level=null}, credential=null, transportSettings=null, commandListeners=[], codecRegistry=ProvidersCodecRegistry{codecProviders=[ValueCodecProvider{}, BsonValueCodecProvider{}, DBRefCodecProvider{}, DBObjectCodecProvider{}, DocumentCodecProvider{}, CollectionCodecProvider{}, IterableCodecProvider{}, MapCodecProvider{}, GeoJsonCodecProvider{}, GridFSFileCodecProvider{}, Jsr310CodecProvider{}, JsonObjectCodecProvider{}, BsonCodecProvider{}, EnumCodecProvider{}, com.mongodb.client.model.mql.ExpressionCodecProvider@3dc39459, com.mongodb.Jep395RecordCodecProvider@6b16de91, com.mongodb.KotlinCodecProvider@71bb8b34]}, loggerSettings=LoggerSettings{maxDocumentLength=1000}, clusterSettings={hosts=[localhost:27017], srvServiceName=mongodb, mode=SINGLE, requiredClusterType=UNKNOWN, requiredReplicaSetName='null', serverSelector='null', clusterListeners='[]', serverSelectionTimeout='30000 ms', localThreshold='15 ms'}, socketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=0, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, heartbeatSocketSettings=SocketSettings{connectTimeoutMS=10000, readTimeoutMS=10000, receiveBufferSize=0, proxySettings=ProxySettings{host=null, port=null, username=null, password=null}}, connectionPoolSettings=ConnectionPoolSettings{maxSize=100, minSize=0, maxWaitTimeMS=120000, maxConnectionLifeTimeMS=0, maxConnectionIdleTimeMS=0, maintenanceInitialDelayMS=0, maintenanceFrequencyMS=60000, connectionPoolListeners=[], maxConnecting=2}, serverSettings=ServerSettings{heartbeatFrequencyMS=10000, minHeartbeatFrequencyMS=500, serverListeners='[]', serverMonitorListeners='[]'}, sslSettings=SslSettings{enabled=false, invalidHostNameAllowed=false, context=null}, applicationName='null', compressorList=[], uuidRepresentation=JAVA_LEGACY, serverApi=null, autoEncryptionSettings=null, dnsClient=null, inetAddressResolver=null, contextProvider=null}
+2026-09-01T17:06:13.003+05:30  INFO 12164 --- [attendwise-backend] [localhost:27017] org.mongodb.driver.cluster               : Monitor thread successfully connected to server with description ServerDescription{address=localhost:27017, type=STANDALONE, state=CONNECTED, ok=true, minWireVersion=0, maxWireVersion=28, maxDocumentSize=16777216, logicalSessionTimeoutMinutes=30, roundTripTimeNanos=32269700}
+2026-09-01T17:06:13.118+05:30  WARN 12164 --- [attendwise-backend] [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 14a195c6-fcfd-4756-81c9-29ef0298c35f
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-09-01T17:06:13.120+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-09-01T17:06:13.407+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] c.a.backend.DataPersistenceTest          : Started DataPersistenceTest in 1.04 seconds (process running for 11.767)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

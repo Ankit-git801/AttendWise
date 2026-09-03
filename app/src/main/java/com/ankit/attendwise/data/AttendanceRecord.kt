@@ -6,8 +6,6 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.UUID
 
-import com.google.firebase.firestore.PropertyName
-
 @Keep
 @Entity(
     tableName = "attendance_records",
@@ -32,8 +30,6 @@ data class AttendanceRecord(
     val subjectId: String = "",
     val scheduleId: String = "",
     val date: Long = 0,
-    @get:PropertyName("isPresent")
-    @set:PropertyName("isPresent")
     var isPresent: Boolean = false,
     val note: String = "",
     val type: RecordType = RecordType.CLASS,

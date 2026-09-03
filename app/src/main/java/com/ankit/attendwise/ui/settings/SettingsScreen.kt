@@ -30,7 +30,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.google.firebase.auth.FirebaseAuth
 import com.ankit.attendwise.viewmodel.AppViewModel
 import androidx.compose.ui.res.stringResource
 import com.ankit.attendwise.R
@@ -266,21 +265,12 @@ fun ThemeDialog(currentTheme: String, onDismiss: () -> Unit, onThemeSelected: (S
 
 @Composable
 fun CloudSettingsItem(appViewModel: AppViewModel) {
-    var user by remember { mutableStateOf(FirebaseAuth.getInstance().currentUser) }
+    val userId by appViewModel.currentUser.collectAsStateWithLifecycle()
+    val email by appViewModel.userEmail.collectAsStateWithLifecycle()
     val isSyncing by appViewModel.isSyncing.collectAsStateWithLifecycle()
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var showAuthDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-
-    DisposableEffect(Unit) {
-        val listener = FirebaseAuth.AuthStateListener { auth ->
-            user = auth.currentUser
-        }
-        FirebaseAuth.getInstance().addAuthStateListener(listener)
-        onDispose {
-            FirebaseAuth.getInstance().removeAuthStateListener(listener)
-        }
-    }
 
     if (showLogoutDialog) {
         AlertDialog(
@@ -340,7 +330,7 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
                 Text(stringResource(R.string.backup_status_syncing), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
             } else {
                 val displayMessage = when {
-                    user != null -> stringResource(R.string.backup_status_account, user?.email ?: "")
+                    userId != null -> stringResource(R.string.backup_status_account, email ?: "")
                     else -> errorMessage ?: stringResource(R.string.backup_status_no_account)
                 }
                 Text(
@@ -352,7 +342,7 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
 
             Spacer(Modifier.height(16.dp))
             
-            if (user == null) {
+            if (userId == null) {
                 Button(
                     onClick = { showAuthDialog = true },
                     modifier = Modifier.fillMaxWidth(),

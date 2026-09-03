@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.attendwise.backend.DataApiIntegrationTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-09-01T11:36:11.251Z" hostname="LAPTOP-BQ0TIM0F" time="1.106">
+  <properties/>
+  <testcase name="test invalid subject ownership rejection()" classname="com.attendwise.backend.DataApiIntegrationTest" time="0.347"/>
+  <testcase name="test schedule and attendance integration()" classname="com.attendwise.backend.DataApiIntegrationTest" time="0.531"/>
+  <testcase name="test subject lifecycle and ownership()" classname="com.attendwise.backend.DataApiIntegrationTest" time="0.201"/>
+  <system-out><![CDATA[2026-09-01T17:06:11.254+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.attendwise.backend.DataApiIntegrationTest]: DataApiIntegrationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-09-01T17:06:11.264+05:30  INFO 12164 --- [attendwise-backend] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.attendwise.backend.BackendApplication for test class com.attendwise.backend.DataApiIntegrationTest
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

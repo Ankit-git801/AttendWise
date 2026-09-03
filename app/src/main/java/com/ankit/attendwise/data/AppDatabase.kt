@@ -8,19 +8,38 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
+import com.ankit.attendwise.data.local.PendingOperation
+import com.ankit.attendwise.data.local.PendingOperationDao
+
 @Database(
-    entities = [Subject::class, ClassSchedule::class, AttendanceRecord::class],
-    version = 6,
+    entities = [Subject::class, ClassSchedule::class, AttendanceRecord::class, PendingOperation::class],
+    version = 7,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun attendanceDao(): AttendanceDao
+    abstract fun pendingOperationDao(): PendingOperationDao
 
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
+
+        private val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `pending_operations` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, 
+                        `entityType` TEXT NOT NULL, 
+                        `entityId` TEXT NOT NULL, 
+                        `parentId` TEXT, 
+                        `operation` TEXT NOT NULL, 
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+            }
+        }
 
         private val MIGRATION_4_5 = object : Migration(4, 5) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -77,7 +96,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "attendwise_db"
                 )
-                    .addMigrations(MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     // Ensure Foreign Key constraints (like CASCADE DELETE) are enabled
                     .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                     .addCallback(object : RoomDatabase.Callback() {

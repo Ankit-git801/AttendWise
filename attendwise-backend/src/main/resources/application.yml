@@ -1,0 +1,12 @@
+spring:
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/attendwise}
+  application:
+    name: attendwise-backend
+
+jwt:
+  secret: ${JWT_SECRET:your-very-long-and-secure-jwt-secret-key-placeholder}
+
+server:
+  port: ${PORT:8080}

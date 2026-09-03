@@ -31,7 +31,6 @@ import com.ankit.attendwise.R
 import com.ankit.attendwise.ui.settings.AuthDialog
 import com.ankit.attendwise.ui.theme.PoppinsFamily
 import com.ankit.attendwise.viewmodel.AppViewModel
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.delay
 
 enum class OnboardingStep {
