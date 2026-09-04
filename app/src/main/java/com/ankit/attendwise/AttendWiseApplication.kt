@@ -40,5 +40,14 @@ class AttendWiseApplication : Application() {
         val localDataSource = LocalDataSource(database.attendanceDao(), database.pendingOperationDao())
         val remoteDataSource = RemoteDataSource(RetrofitClient.api)
         repository = AttendWiseRepository(localDataSource, remoteDataSource, sessionManager)
+
+        // PRE-WARM SERVER: Fire async ping on app launch so Render wakes up before user clicks Sign In
+        applicationScope.launch(Dispatchers.IO) {
+            try {
+                RetrofitClient.api.checkHealth()
+            } catch (_: Exception) {
+                // Fire-and-forget pre-warm ping
+            }
+        }
     }
 }
