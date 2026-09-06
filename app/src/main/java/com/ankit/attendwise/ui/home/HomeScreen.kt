@@ -339,17 +339,32 @@ fun ExtraClassDialog(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(stringResource(R.string.extra_class_count), fontWeight = FontWeight.Bold)
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = { if (count > 1) count-- }) {
-                                Icon(Icons.Default.Remove, null)
-                            }
-                            Text(
-                                count.toString(),
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.padding(horizontal = 8.dp)
-                            )
-                            IconButton(onClick = { count++ }) {
-                                Icon(Icons.Default.Add, null)
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                            ) {
+                                IconButton(
+                                    onClick = { if (count > 1) count-- },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(18.dp))
+                                }
+                                Text(
+                                    text = count.toString(),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 12.dp)
+                                )
+                                IconButton(
+                                    onClick = { if (count < 10) count++ },
+                                    modifier = Modifier.size(36.dp)
+                                ) {
+                                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
+                                }
                             }
                         }
                     }

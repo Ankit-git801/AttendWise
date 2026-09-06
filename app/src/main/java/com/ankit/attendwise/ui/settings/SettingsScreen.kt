@@ -5,9 +5,11 @@ package com.ankit.attendwise.ui.settings
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -59,7 +61,7 @@ fun SettingsScreen(navController: NavController, appViewModel: AppViewModel) {
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            icon = { Icon(Icons.Default.Warning, contentDescription = null) },
+            icon = { Icon(Icons.Default.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
             title = { Text(stringResource(R.string.dialog_delete_all_title)) },
             text = { Text(stringResource(R.string.dialog_delete_all_text)) },
             confirmButton = {
@@ -68,7 +70,8 @@ fun SettingsScreen(navController: NavController, appViewModel: AppViewModel) {
                         appViewModel.deleteAllData()
                         showDeleteDialog = false
                     },
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { Text(stringResource(R.string.dialog_delete_all_confirm)) }
             },
             dismissButton = { 
@@ -283,7 +286,8 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
                         showLogoutDialog = false
                         appViewModel.logout()
                     },
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
                 ) { Text(stringResource(R.string.action_sign_out)) }
             },
             dismissButton = { 
@@ -321,7 +325,15 @@ fun CloudSettingsItem(appViewModel: AppViewModel) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.CloudQueue, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(12.dp))
-                Text(stringResource(R.string.section_cloud_account), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.section_cloud_account), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                
+                if (userId != null) {
+                    Box(
+                        modifier = Modifier
+                            .size(10.dp)
+                            .background(com.ankit.attendwise.ui.theme.SuccessGreen, CircleShape)
+                    )
+                }
             }
             Spacer(Modifier.height(8.dp))
             
@@ -397,10 +409,18 @@ fun AuthDialog(
     }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        onDismissRequest = if (isLoading) {{}} else onDismiss,
         title = { Text(dialogTitle) },
         text = {
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (isResetMode) {
+                    Text(
+                        text = "Enter your registered email and new password to update your account.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
                 if (error != null) {
                     Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
@@ -412,6 +432,7 @@ fun AuthDialog(
                     value = email,
                     onValueChange = { email = it; error = null; successMsg = null },
                     label = { Text(stringResource(R.string.label_email)) },
+                    leadingIcon = { Icon(Icons.Default.Email, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
@@ -422,6 +443,7 @@ fun AuthDialog(
                     value = password,
                     onValueChange = { password = it; error = null; successMsg = null },
                     label = { Text(if (isResetMode) "New Password" else stringResource(R.string.label_password)) },
+                    leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),

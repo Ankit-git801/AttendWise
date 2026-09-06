@@ -2,6 +2,7 @@ package com.ankit.attendwise.ui.addsubject
 
 import android.app.TimePickerDialog
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -326,15 +327,17 @@ private fun ColorPicker(selectedColor: String, onColorSelected: (String) -> Unit
             
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
+                contentPadding = PaddingValues(horizontal = 4.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 items(predefinedColors) { colorHex ->
                     val isSelected = colorHex.equals(selectedColor, ignoreCase = true)
                     val color = ColorUtils.safeParseColor(colorHex)
+                    val circleSize by animateDpAsState(if (isSelected) 52.dp else 42.dp, label = "color_circle_size")
                     
                     Box(
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(circleSize)
                             .clip(CircleShape)
                             .background(color)
                             .clickable { onColorSelected(colorHex) }

@@ -206,7 +206,11 @@ private fun DonutChart(
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
-            Text(stringResource(R.string.mark_present), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "Target: ${target.toInt()}%",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -243,6 +247,7 @@ private fun SubjectStatCard(
 ) {
     val subject = subjectWithAttendance.subject
     val percentage = subjectWithAttendance.percentage
+    val subjectColor = remember(subject.color) { ColorUtils.safeParseColor(subject.color) }
 
     Card(
         modifier = Modifier
@@ -251,55 +256,63 @@ private fun SubjectStatCard(
         shape = MaterialTheme.shapes.large,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier
-                    .size(12.dp)
-                    .background(
-                        ColorUtils.safeParseColor(subject.color),
-                        CircleShape
+        Column {
+            Row(Modifier.padding(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier
+                        .size(12.dp)
+                        .background(
+                            subjectColor,
+                            CircleShape
+                        )
+                )
+                Spacer(Modifier.width(16.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(subject.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(
+                        stringResource(R.string.label_attendance_target) + ": ${subject.targetAttendance}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-            )
-            Spacer(Modifier.width(16.dp))
-            Column(Modifier.weight(1f)) {
-                Text(subject.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                }
                 Text(
-                    stringResource(R.string.label_attendance_target) + ": ${subject.targetAttendance}%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    text = "${subjectWithAttendance.presentClasses}/${subjectWithAttendance.totalClasses}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(end = 16.dp)
                 )
-            }
-            Text(
-                text = "${subjectWithAttendance.presentClasses}/${subjectWithAttendance.totalClasses}",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(end = 16.dp)
-            )
 
-            val color = if (percentage >= subject.targetAttendance) SuccessGreen else ErrorRed
-            Row(
-                modifier = Modifier.width(70.dp),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.Bottom
-            ) {
-                Text(
-                    text = "%.1f".format(percentage),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = color,
-                    modifier = Modifier.alignByBaseline()
-                )
-                Text(
-                    text = "%",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = color,
-                    modifier = Modifier
-                        .padding(start = 2.dp, bottom = 2.dp)
-                        .alignByBaseline()
-                )
+                val statusColor = if (percentage >= subject.targetAttendance) SuccessGreen else ErrorRed
+                Row(
+                    modifier = Modifier.width(70.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    Text(
+                        text = "%.1f".format(percentage),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = statusColor,
+                        modifier = Modifier.alignByBaseline()
+                    )
+                    Text(
+                        text = "%",
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Bold,
+                        color = statusColor,
+                        modifier = Modifier
+                            .padding(start = 2.dp, bottom = 2.dp)
+                            .alignByBaseline()
+                    )
+                }
             }
+            LinearProgressIndicator(
+                progress = { (percentage.toFloat() / 100f).coerceIn(0f, 1f) },
+                modifier = Modifier.fillMaxWidth().height(4.dp),
+                color = subjectColor,
+                trackColor = subjectColor.copy(alpha = 0.2f)
+            )
         }
     }
 }
