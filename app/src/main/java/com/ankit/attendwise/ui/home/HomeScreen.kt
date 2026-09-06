@@ -398,9 +398,9 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
     }
 
     val greetingPeriod = when (currentHour) {
-        in 4..11 -> stringResource(R.string.time_morning)
-        in 12..16 -> stringResource(R.string.time_afternoon)
-        else -> stringResource(R.string.time_evening)
+        in 4..11 -> "Morning"
+        in 12..16 -> "Afternoon"
+        else -> "Evening"
     }
 
     Card(
@@ -414,7 +414,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(Brush.linearGradient(colors = greetingInfo.gradientColors))
-                .padding(20.dp)
+                .padding(24.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -423,11 +423,11 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                 Icon(
                     imageVector = greetingInfo.icon,
                     contentDescription = stringResource(R.string.content_desc_greeting_icon),
-                    modifier = Modifier.size(72.dp),
+                    modifier = Modifier.size(80.dp),
                     tint = Color.White.copy(alpha = 0.9f)
                 )
                 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(20.dp))
                 
                 Column(
                     modifier = Modifier.weight(1f),
@@ -435,8 +435,9 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                 ) {
                     Text(
                         text = "Good",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
                         fontFamily = PoppinsFamily
                     )
                     Text(
@@ -448,18 +449,18 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                     )
                     Text(
                         text = userName.ifEmpty { stringResource(R.string.greeting_student) },
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(2.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.8f),
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color.White.copy(alpha = 0.85f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
