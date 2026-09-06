@@ -428,19 +428,19 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "${stringResource(greetingInfo.greetingResId)}, ${userName.ifEmpty { stringResource(R.string.greeting_student) }} !",
+                        text = userName.ifEmpty { stringResource(R.string.greeting_student) },
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = date,
+                        text = "${stringResource(greetingInfo.greetingResId)} • $date",
                         style = MaterialTheme.typography.titleMedium,
-                        color = Color.White.copy(alpha = 0.8f),
+                        color = Color.White.copy(alpha = 0.85f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
