@@ -385,28 +385,28 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 160.dp),
+            .height(180.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .background(Brush.linearGradient(colors = greetingInfo.gradientColors))
-                .padding(20.dp)
+                .padding(24.dp)
         ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = greetingInfo.icon,
                     contentDescription = stringResource(R.string.content_desc_greeting_icon),
-                    modifier = Modifier.size(68.dp),
+                    modifier = Modifier.size(80.dp),
                     tint = Color.White.copy(alpha = 0.9f)
                 )
                 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(20.dp))
                 
                 Column(
                     modifier = Modifier.weight(1f),
@@ -414,7 +414,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                 ) {
                     Text(
                         text = "${stringResource(greetingInfo.greetingResId)}, ${userName.ifEmpty { stringResource(R.string.greeting_student) }} !",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily,
@@ -424,8 +424,8 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White.copy(alpha = 0.8f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
