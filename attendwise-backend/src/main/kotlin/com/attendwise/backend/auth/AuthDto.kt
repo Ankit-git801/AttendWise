@@ -32,6 +32,16 @@ data class UpdateUserRequest(
     val name: String
 )
 
+data class ResetPasswordRequest(
+    @field:NotBlank(message = "Email is required")
+    @field:Email(message = "Invalid email format")
+    val email: String,
+
+    @field:NotBlank(message = "New password is required")
+    @field:Size(min = 6, message = "Password must be at least 6 characters")
+    val newPassword: String
+)
+
 data class AuthResponse(
     val token: String,
     val user: UserResponse

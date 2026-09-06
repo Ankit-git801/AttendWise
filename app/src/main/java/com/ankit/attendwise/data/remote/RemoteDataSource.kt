@@ -7,6 +7,7 @@ class RemoteDataSource(private val api: AttendWiseApi) {
     // Auth
     suspend fun register(request: RegisterRequest) = safeApiCall { api.register(request) }
     suspend fun login(request: LoginRequest) = safeApiCall { api.login(request) }
+    suspend fun resetPassword(request: ResetPasswordRequest) = safeApiCall { api.resetPassword(request) }
     suspend fun getCurrentUser() = safeApiCall { api.getCurrentUser() }
     suspend fun updateCurrentUser(request: UpdateUserRequest) = safeApiCall { api.updateCurrentUser(request) }
 

@@ -381,25 +381,36 @@ fun AuthDialog(
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var isSignUp by remember { mutableStateOf(initialIsSignUp) }
+    var isResetMode by remember { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var successMsg by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         appViewModel.syncData()
     }
 
+    val dialogTitle = when {
+        isResetMode -> "Reset Password"
+        isSignUp -> stringResource(R.string.dialog_auth_signup_title)
+        else -> stringResource(R.string.dialog_auth_signin_title)
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (isSignUp) stringResource(R.string.dialog_auth_signup_title) else stringResource(R.string.dialog_auth_signin_title)) },
+        title = { Text(dialogTitle) },
         text = {
             Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (error != null) {
                     Text(error!!, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 }
+                if (successMsg != null) {
+                    Text(successMsg!!, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+                }
                 
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { email = it; error = null },
+                    onValueChange = { email = it; error = null; successMsg = null },
                     label = { Text(stringResource(R.string.label_email)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
@@ -409,8 +420,8 @@ fun AuthDialog(
                 
                 OutlinedTextField(
                     value = password,
-                    onValueChange = { password = it; error = null },
-                    label = { Text(stringResource(R.string.label_password)) },
+                    onValueChange = { password = it; error = null; successMsg = null },
+                    label = { Text(if (isResetMode) "New Password" else stringResource(R.string.label_password)) },
                     singleLine = true,
                     shape = RoundedCornerShape(12.dp),
                     visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
@@ -425,31 +436,30 @@ fun AuthDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 
-                TextButton(
-                    onClick = { isSignUp = !isSignUp; error = null },
-                    modifier = Modifier.align(Alignment.End),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(if (isSignUp) stringResource(R.string.auth_switch_to_signin) else stringResource(R.string.auth_switch_to_signup))
+                if (!isResetMode) {
+                    TextButton(
+                        onClick = { isSignUp = !isSignUp; error = null; successMsg = null },
+                        modifier = Modifier.align(Alignment.End),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(if (isSignUp) stringResource(R.string.auth_switch_to_signin) else stringResource(R.string.auth_switch_to_signup))
+                    }
                 }
 
-                        if (!isSignUp) {
-                    val authEnterEmailReset = stringResource(R.string.auth_enter_email_reset)
-                    val authResetSent = stringResource(R.string.auth_reset_sent)
+                if (!isSignUp) {
                     TextButton(
                         onClick = {
-                            if (email.isBlank()) {
-                                error = authEnterEmailReset
-                                return@TextButton
-                            }
-                            appViewModel.resetPassword(email) { success, msg ->
-                                error = if (success) authResetSent else msg
-                            }
+                            isResetMode = !isResetMode
+                            error = null
+                            successMsg = null
                         },
                         modifier = Modifier.align(Alignment.End),
                         shape = RoundedCornerShape(12.dp)
                     ) {
-                        Text(stringResource(R.string.auth_forgot_password), style = MaterialTheme.typography.bodySmall)
+                        Text(
+                            if (isResetMode) "Back to Sign In" else stringResource(R.string.auth_forgot_password),
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }
@@ -459,6 +469,13 @@ fun AuthDialog(
             val wrongPasswordError = stringResource(R.string.error_wrong_password)
             val userNotFoundError = stringResource(R.string.error_user_not_found)
             val authFailedError = stringResource(R.string.error_auth_failed)
+            
+            val buttonText = when {
+                isResetMode -> "Reset Password"
+                isSignUp -> stringResource(R.string.action_sign_up)
+                else -> stringResource(R.string.action_sign_in)
+            }
+
             Button(
                 onClick = {
                     if (email.isBlank() || password.isBlank()) {
@@ -466,7 +483,20 @@ fun AuthDialog(
                         return@Button
                     }
                     isLoading = true
-                    if (isSignUp) {
+                    error = null
+                    successMsg = null
+
+                    if (isResetMode) {
+                        appViewModel.resetPassword(email, password) { success, msg ->
+                            isLoading = false
+                            if (success) {
+                                successMsg = msg
+                                isResetMode = false
+                            } else {
+                                error = msg
+                            }
+                        }
+                    } else if (isSignUp) {
                         appViewModel.signUpWithEmail(email, password) { success, msg ->
                             isLoading = false
                             if (success) {
@@ -501,7 +531,7 @@ fun AuthDialog(
                 shape = RoundedCornerShape(12.dp)
             ) {
                 if (isLoading) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                else Text(if (isSignUp) stringResource(R.string.action_sign_up) else stringResource(R.string.action_sign_in))
+                else Text(buttonText)
             }
         },
         dismissButton = {

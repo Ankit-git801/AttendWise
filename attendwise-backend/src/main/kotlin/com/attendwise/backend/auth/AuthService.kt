@@ -60,6 +60,17 @@ class AuthService(
         return userRepository.save(updatedUser).toResponse()
     }
 
+    fun resetPassword(request: ResetPasswordRequest): Map<String, String> {
+        val user = userRepository.findByEmail(request.email)
+            .orElseThrow { IllegalArgumentException("No account found with this email address") }
+
+        val updatedUser = user.copy(
+            passwordHash = passwordEncoder.encode(request.newPassword)
+        )
+        userRepository.save(updatedUser)
+        return mapOf("message" to "Password updated successfully")
+    }
+
     private fun User.toResponse() = UserResponse(
         id = id,
         email = email,

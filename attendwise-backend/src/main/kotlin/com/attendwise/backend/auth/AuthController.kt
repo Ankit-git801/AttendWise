@@ -22,6 +22,11 @@ class AuthController(
         return ResponseEntity.ok(authService.login(request))
     }
 
+    @PostMapping("/reset-password")
+    fun resetPassword(@Valid @RequestBody request: ResetPasswordRequest): ResponseEntity<Map<String, String>> {
+        return ResponseEntity.ok(authService.resetPassword(request))
+    }
+
     @GetMapping("/me")
     fun getCurrentUser(@AuthenticationPrincipal userId: String): ResponseEntity<UserResponse> {
         return ResponseEntity.ok(authService.getUserById(userId))

@@ -64,6 +64,10 @@ class AttendWiseRepository(
         return result
     }
 
+    suspend fun resetPassword(request: ResetPasswordRequest): NetworkResult<Map<String, String>> {
+        return remoteDataSource.resetPassword(request)
+    }
+
     suspend fun getCurrentUser() = remoteDataSource.getCurrentUser()
 
     suspend fun updateCurrentUser(request: UpdateUserRequest): NetworkResult<UserDto> {

@@ -15,6 +15,7 @@ import com.ankit.attendwise.data.*
 import com.ankit.attendwise.data.remote.NetworkResult
 import com.ankit.attendwise.data.remote.dto.LoginRequest
 import com.ankit.attendwise.data.remote.dto.RegisterRequest
+import com.ankit.attendwise.data.remote.dto.ResetPasswordRequest
 import com.ankit.attendwise.data.remote.dto.UpdateUserRequest
 import com.ankit.attendwise.models.AttendanceRecordWithSubject
 import com.ankit.attendwise.models.AttendanceStatistics
@@ -927,8 +928,16 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun resetPassword(email: String, onComplete: (Boolean, String?) -> Unit) {
-        // Backend password reset not yet implemented.
-        onComplete(false, "Password reset is currently unavailable. Please contact support.")
+    fun resetPassword(email: String, newPassword: String, onComplete: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            val result = repository.resetPassword(ResetPasswordRequest(email, newPassword))
+            when (result) {
+                is NetworkResult.Success -> {
+                    onComplete(true, result.data["message"] ?: "Password reset successful")
+                }
+                is NetworkResult.Error -> onComplete(false, result.message ?: "Failed to reset password")
+                is NetworkResult.Exception -> onComplete(false, result.e.message ?: "Network error")
+            }
+        }
     }
 }

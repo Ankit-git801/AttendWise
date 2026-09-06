@@ -22,6 +22,12 @@ data class UpdateUserRequest(
 )
 
 @Keep
+data class ResetPasswordRequest(
+    val email: String,
+    val newPassword: String
+)
+
+@Keep
 data class AuthResponse(
     val token: String,
     val user: UserDto

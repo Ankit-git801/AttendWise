@@ -17,6 +17,9 @@ interface AttendWiseApi {
     @POST("api/auth/login")
     suspend fun login(@Body request: LoginRequest): Response<AuthResponse>
 
+    @POST("api/auth/reset-password")
+    suspend fun resetPassword(@Body request: ResetPasswordRequest): Response<Map<String, String>>
+
     @GET("api/auth/me")
     suspend fun getCurrentUser(): Response<UserDto>
 
