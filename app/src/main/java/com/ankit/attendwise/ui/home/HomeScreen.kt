@@ -592,6 +592,7 @@ fun TodayScheduleCard(
 ) {
     val record = scheduleWithSubject.attendanceRecord
     val haptic = LocalHapticFeedback.current
+    val isSyncing by appViewModel.isSyncing.collectAsStateWithLifecycle()
     
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
@@ -706,9 +707,12 @@ fun TodayScheduleCard(
                             ) {
                                 Button(
                                     onClick = { 
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        appViewModel.markDateAsPresent(subject.id, schedule.id, date) 
+                                        if (!isSyncing) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            appViewModel.markDateAsPresent(subject.id, schedule.id, date) 
+                                        }
                                     },
+                                    enabled = !isSyncing,
                                     modifier = Modifier.weight(1f).height(40.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     contentPadding = PaddingValues(0.dp)
@@ -717,9 +721,12 @@ fun TodayScheduleCard(
                                 }
                                 OutlinedButton(
                                     onClick = { 
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        appViewModel.markDateAsAbsent(subject.id, schedule.id, date) 
+                                        if (!isSyncing) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            appViewModel.markDateAsAbsent(subject.id, schedule.id, date) 
+                                        }
                                     },
+                                    enabled = !isSyncing,
                                     modifier = Modifier.weight(1f).height(40.dp),
                                     shape = RoundedCornerShape(12.dp),
                                     contentPadding = PaddingValues(0.dp)
@@ -728,9 +735,12 @@ fun TodayScheduleCard(
                                 }
                                 IconButton(
                                     onClick = { 
-                                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        appViewModel.markDateAsCancelled(subject.id, schedule.id, date) 
+                                        if (!isSyncing) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            appViewModel.markDateAsCancelled(subject.id, schedule.id, date) 
+                                        }
                                     },
+                                    enabled = !isSyncing,
                                     modifier = Modifier.size(40.dp),
                                     colors = IconButtonDefaults.iconButtonColors(
                                         contentColor = MaterialTheme.colorScheme.error
