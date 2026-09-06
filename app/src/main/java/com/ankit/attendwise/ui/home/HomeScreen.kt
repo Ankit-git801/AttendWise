@@ -397,6 +397,12 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
         currentDate.format(DateTimeFormatter.ofPattern("EEE, MMM d")) 
     }
 
+    val greetingPeriod = when (currentHour) {
+        in 4..11 -> stringResource(R.string.time_morning)
+        in 12..16 -> stringResource(R.string.time_afternoon)
+        else -> stringResource(R.string.time_evening)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -408,7 +414,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(Brush.linearGradient(colors = greetingInfo.gradientColors))
-                .padding(24.dp)
+                .padding(20.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxSize(),
@@ -417,29 +423,42 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                 Icon(
                     imageVector = greetingInfo.icon,
                     contentDescription = stringResource(R.string.content_desc_greeting_icon),
-                    modifier = Modifier.size(80.dp),
+                    modifier = Modifier.size(72.dp),
                     tint = Color.White.copy(alpha = 0.9f)
                 )
                 
-                Spacer(modifier = Modifier.width(20.dp))
+                Spacer(modifier = Modifier.width(16.dp))
                 
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.Center
                 ) {
                     Text(
-                        text = "${stringResource(greetingInfo.greetingResId)}, ${userName.ifEmpty { stringResource(R.string.greeting_student) }} !",
+                        text = "Good",
+                        style = MaterialTheme.typography.titleSmall,
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontFamily = PoppinsFamily
+                    )
+                    Text(
+                        text = greetingPeriod,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        fontFamily = PoppinsFamily
+                    )
+                    Text(
+                        text = userName.ifEmpty { stringResource(R.string.greeting_student) },
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily,
-                        maxLines = 2,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = Color.White.copy(alpha = 0.8f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
