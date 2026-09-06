@@ -1,12 +1,16 @@
 package com.attendwise.backend.subject
 
+import com.attendwise.backend.attendance.AttendanceRecordRepository
 import com.attendwise.backend.common.OwnershipException
+import com.attendwise.backend.schedule.ScheduleRepository
 import org.springframework.stereotype.Service
 import java.util.*
 
 @Service
 class SubjectService(
-    private val subjectRepository: SubjectRepository
+    private val subjectRepository: SubjectRepository,
+    private val scheduleRepository: ScheduleRepository,
+    private val attendanceRecordRepository: AttendanceRecordRepository
 ) {
 
     fun getAllSubjectsForUser(userId: String): List<SubjectResponse> {
@@ -61,6 +65,9 @@ class SubjectService(
             throw OwnershipException("You do not own this subject")
         }
         
+        // CASCADE DELETE child schedules and attendance records
+        scheduleRepository.deleteAllBySubjectId(id)
+        attendanceRecordRepository.deleteAllBySubjectId(id)
         subjectRepository.delete(subject)
     }
 

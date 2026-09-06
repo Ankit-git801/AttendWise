@@ -108,8 +108,10 @@ fun CalendarScreen(appViewModel: AppViewModel) {
             AttendanceCalendar(
                 allRecords = allRecords,
                 onDayClick = { date ->
-                    selectedDate = date
-                    showDialog = true
+                    if (!showDialog) {
+                        selectedDate = date
+                        showDialog = true
+                    }
                 }
             )
 

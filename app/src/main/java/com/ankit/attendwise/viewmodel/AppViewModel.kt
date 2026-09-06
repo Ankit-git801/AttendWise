@@ -296,13 +296,14 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     fun addPastRecords(subjectId: String, pastAttended: Int, pastMissed: Int) {
         viewModelScope.launch {
             val pastRecords = mutableListOf<AttendanceRecord>()
+            var daysBack = 1L
             repeat(pastAttended) {
                 pastRecords.add(
                     AttendanceRecord(
                         id = UUID.randomUUID().toString(),
                         subjectId = subjectId,
                         scheduleId = ID_SCHEDULE_PAST,
-                        date = LocalDate.now().toEpochDay(),
+                        date = LocalDate.now().minusDays(daysBack++).toEpochDay(),
                         isPresent = true,
                         type = RecordType.MANUAL,
                         note = "Migrated Past Record"
@@ -315,7 +316,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                         id = UUID.randomUUID().toString(),
                         subjectId = subjectId,
                         scheduleId = ID_SCHEDULE_PAST,
-                        date = LocalDate.now().toEpochDay(),
+                        date = LocalDate.now().minusDays(daysBack++).toEpochDay(),
                         isPresent = false,
                         type = RecordType.MANUAL,
                         note = "Migrated Past Record"

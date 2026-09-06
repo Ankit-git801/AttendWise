@@ -12,4 +12,7 @@ interface AttendanceRecordRepository : MongoRepository<AttendanceRecord, String>
 
     fun countBySubjectIdAndTypeIn(subjectId: String, types: Collection<RecordType>): Int
     fun countBySubjectIdAndIsPresentAndTypeIn(subjectId: String, isPresent: Boolean, types: Collection<RecordType>): Int
+
+    fun deleteAllByUserId(userId: String)
+    fun deleteAllBySubjectId(subjectId: String)
 }
