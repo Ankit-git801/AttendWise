@@ -435,21 +435,21 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                 ) {
                     Text(
                         text = "Good",
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily
                     )
                     Text(
                         text = greetingPeriod,
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily
                     )
                     Text(
                         text = userName.ifEmpty { stringResource(R.string.greeting_student) },
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily,
@@ -459,7 +459,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.bodyLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = Color.White.copy(alpha = 0.85f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis

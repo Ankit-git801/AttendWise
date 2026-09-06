@@ -307,12 +307,6 @@ private fun SubjectStatCard(
                     )
                 }
             }
-            LinearProgressIndicator(
-                progress = { (percentage.toFloat() / 100f).coerceIn(0f, 1f) },
-                modifier = Modifier.fillMaxWidth().height(4.dp),
-                color = subjectColor,
-                trackColor = subjectColor.copy(alpha = 0.2f)
-            )
         }
     }
 }
