@@ -379,7 +379,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
     val greetingInfo = getGreetingInfo(currentHour)
     
     val date = remember(currentDate) { 
-        currentDate.format(DateTimeFormatter.ofPattern("EEEE, MMMM d")) 
+        currentDate.format(DateTimeFormatter.ofPattern("EEE, MMM d")) 
     }
 
     Card(
