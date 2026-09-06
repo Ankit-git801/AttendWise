@@ -30,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.ankit.attendwise.data.BunkAnalysis
@@ -435,21 +436,21 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                 ) {
                     Text(
                         text = "Good",
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 26.sp),
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily
                     )
                     Text(
                         text = greetingPeriod,
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 26.sp),
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily
                     )
                     Text(
                         text = userName.ifEmpty { stringResource(R.string.greeting_student) },
-                        style = MaterialTheme.typography.headlineSmall,
+                        style = MaterialTheme.typography.headlineSmall.copy(fontSize = 26.sp),
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
                         fontFamily = PoppinsFamily,
@@ -459,7 +460,7 @@ fun GreetingCard(userName: String, currentDate: LocalDate) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = date,
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium.copy(fontSize = 16.sp),
                         color = Color.White.copy(alpha = 0.85f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
