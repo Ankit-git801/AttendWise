@@ -8,9 +8,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    // EMULATOR LOCALHOST: Use 10.0.2.2 for emulator
-    // PHYSICAL DEVICE: Use your host machine's IP (e.g., 10.105.175.7)
-    private const val BASE_URL = "http://10.105.175.7:8080/"
+    // LIVE PRODUCTION BACKEND (Render Cloud Server)
+    private const val BASE_URL = "https://attendwise-backend-ywya.onrender.com/"
     
     private var authToken: String? = null
 
@@ -33,9 +32,9 @@ object RetrofitClient {
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
         .addInterceptor(loggingInterceptor)
-        .connectTimeout(30, TimeUnit.SECONDS)
-        .readTimeout(30, TimeUnit.SECONDS)
-        .writeTimeout(30, TimeUnit.SECONDS)
+        .connectTimeout(60, TimeUnit.SECONDS)
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
         .build()
 
     private val retrofit: Retrofit by lazy {

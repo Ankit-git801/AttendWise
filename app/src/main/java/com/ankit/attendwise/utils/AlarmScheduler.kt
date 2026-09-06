@@ -81,11 +81,10 @@ object AlarmScheduler {
         Log.d(TAG, "Scheduling alarm for ${subject.name} at: ${alarmDateTime.format(formatter)}")
 
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (!alarmManager.canScheduleExactAlarms()) {
-                    Log.e(TAG, "Cannot schedule exact alarm: Permission missing (SCHEDULE_EXACT_ALARM)")
-                    return
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmManager.canScheduleExactAlarms()) {
+                Log.w(TAG, "Exact alarm permission missing. Falling back to setAndAllowWhileIdle for ${subject.name}")
+                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerTimeMs, pendingIntent)
+                return
             }
 
             // CRITICAL FIX: Use setAlarmClock for absolute precision. 

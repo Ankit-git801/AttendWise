@@ -9,9 +9,12 @@ import com.ankit.attendwise.data.remote.dto.*
 import com.ankit.attendwise.models.AttendanceRecordWithSubject
 import com.ankit.attendwise.models.AttendanceStatistics
 import com.ankit.attendwise.models.SubjectWithAttendance
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class AttendWiseRepository(
     private val localDataSource: LocalDataSource,
@@ -88,11 +91,13 @@ class AttendWiseRepository(
     // --- SYNC LOGIC ---
 
     suspend fun syncAll(): NetworkResult<Unit> {
-        // 1. Sync pending local changes to remote
-        syncPendingOperations()
-        
-        // 2. Sync remote changes to local
-        return syncRemoteToLocal()
+        return syncMutex.withLock {
+            // 1. Sync pending local changes to remote
+            syncPendingOperations()
+            
+            // 2. Sync remote changes to local
+            syncRemoteToLocal()
+        }
     }
 
     private suspend fun syncPendingOperations() {
@@ -163,9 +168,9 @@ class AttendWiseRepository(
         }
     }
 
-    private suspend fun syncRemoteToLocal(): NetworkResult<Unit> {
+    private suspend fun syncRemoteToLocal(): NetworkResult<Unit> = coroutineScope {
         val subjectsResult = remoteDataSource.getAllSubjects()
-        if (subjectsResult !is NetworkResult.Success) return mapError(subjectsResult)
+        if (subjectsResult !is NetworkResult.Success) return@coroutineScope mapError(subjectsResult)
         
         val remoteSubjects = subjectsResult.data
         for (rs in remoteSubjects) {
@@ -175,8 +180,16 @@ class AttendWiseRepository(
             }
         }
         
-        for (rs in remoteSubjects) {
-            val schedulesResult = remoteDataSource.getSchedulesForSubject(rs.id)
+        // Parallel sync for schedules and attendance
+        val scheduleJobs = remoteSubjects.map { rs ->
+            async { remoteDataSource.getSchedulesForSubject(rs.id) }
+        }
+        val attendanceJobs = remoteSubjects.map { rs ->
+            async { remoteDataSource.getAttendanceForSubject(rs.id) }
+        }
+        
+        scheduleJobs.forEach { job ->
+            val schedulesResult = job.await()
             if (schedulesResult is NetworkResult.Success) {
                 for (rss in schedulesResult.data) {
                     val local = localDataSource.getScheduleById(rss.id)
@@ -185,8 +198,10 @@ class AttendWiseRepository(
                     }
                 }
             }
-            
-            val attendanceResult = remoteDataSource.getAttendanceForSubject(rs.id)
+        }
+        
+        attendanceJobs.forEach { job ->
+            val attendanceResult = job.await()
             if (attendanceResult is NetworkResult.Success) {
                 for (ra in attendanceResult.data) {
                     val local = localDataSource.getAttendanceRecordById(ra.id)
@@ -197,7 +212,7 @@ class AttendWiseRepository(
             }
         }
         
-        return NetworkResult.Success(Unit)
+        NetworkResult.Success(Unit)
     }
 
     private fun <T> mapError(result: NetworkResult<T>): NetworkResult<Unit> {

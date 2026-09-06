@@ -384,6 +384,10 @@ fun AuthDialog(
     var isLoading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
 
+    LaunchedEffect(Unit) {
+        appViewModel.syncData()
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(if (isSignUp) stringResource(R.string.dialog_auth_signup_title) else stringResource(R.string.dialog_auth_signin_title)) },

@@ -113,6 +113,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
     fun syncData() {
+        if (_isSyncing.value) return // Prevent overlapping syncs
         viewModelScope.launch {
             _isSyncing.value = true
             repository.syncAll()
@@ -864,6 +865,7 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     val user = result.data.user
                     preferencesManager.saveUserName(user.name)
                     onComplete(true, null)
+                    syncData()
                 }
                 is NetworkResult.Error -> onComplete(false, result.message)
                 is NetworkResult.Exception -> onComplete(false, result.e.message)
@@ -875,22 +877,23 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isSyncing.value = true
             val result = repository.login(LoginRequest(email, password))
+            _isSyncing.value = false
             when (result) {
                 is NetworkResult.Success -> {
                     val user = result.data.user
                     preferencesManager.saveUserName(user.name)
                     preferencesManager.setOnboardingComplete(user.onboardingComplete)
                     
-                    // Trigger sync
-                    repository.syncAll()
-                    
-                    rescheduleAllAlarms()
+                    // INSTANT UI FEEDBACK: Dismiss sign-in dialog immediately
                     onComplete(true, null)
+                    
+                    // Trigger full sync & alarm rescheduling in background
+                    syncData()
+                    rescheduleAllAlarms()
                 }
                 is NetworkResult.Error -> onComplete(false, result.message)
                 is NetworkResult.Exception -> onComplete(false, result.e.message)
             }
-            _isSyncing.value = false
         }
     }
 

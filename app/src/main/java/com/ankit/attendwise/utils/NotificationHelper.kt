@@ -83,9 +83,13 @@ object NotificationHelper {
     }
 
     fun showAttendanceNotification(context: Context, subject: Subject, schedule: ClassSchedule, sessionDateEpoch: Long) {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (!notificationManager.areNotificationsEnabled()) {
+            Log.w(TAG, "Notifications disabled by user. Skipping notification for ${subject.name}")
+            return
+        }
         val notificationId = schedule.id.hashCode()
         val notification = buildAttendanceNotification(context, subject, schedule, sessionDateEpoch)
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.notify(notificationId, notification)
     }
 

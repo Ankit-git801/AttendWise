@@ -1,0 +1,34 @@
+================================================================================
+ATTENDWISE - RESUME CONTENT (UPDATED TECH STACK, METRICS & 50+ USERS)
+================================================================================
+
+--------------------------------------------------------------------------------
+1. TECH STACK LINE
+--------------------------------------------------------------------------------
+Kotlin, Spring Boot 3, Jetpack Compose, Room DB, MongoDB Atlas, JWT, Docker, Render
+
+
+--------------------------------------------------------------------------------
+2. LATEX VERSION (For Overleaf / LaTeX Resumes)
+--------------------------------------------------------------------------------
+{\textbf{AttendWise} $|$ \emph{Kotlin, Spring Boot 3, Jetpack Compose, Room DB, MongoDB Atlas, JWT, Docker, Render}}{\href{https://github.com/Ankit-git801/AttendWise}{{GitHub}}}
+      \resumeItemListStart
+        \resumeItem{Engineered a \textbf{full-stack, offline-first Android app} serving \textbf{50+ active users}, backed by a \textbf{Spring Boot 3 REST API} and \textbf{MongoDB Atlas} cloud database that reduces attendance logging to a \textbf{single tap} via exact-time notifications.}
+        \resumeItem{Architected \textbf{8 Jetpack Compose Material3 screens} backed by a \textbf{3-entity Room database} and \textbf{parallel coroutine data streams}, accelerating sign-in and cross-device sync response times to \textbf{under 0.5 seconds}.}
+        \resumeItem{Achieved \textbf{95\% notification delivery precision} across Android 12--14 Doze restrictions, time-zone shifts, and system reboots by implementing Doze-exempt \textbf{setAlarmClock()} scheduling across \textbf{4 custom BroadcastReceivers}.}
+        \resumeItem{Containerized and deployed the backend on \textbf{Render via Docker}, integrating \textbf{stateless JWT authentication}, \textbf{CORS security}, and \textbf{mutex-guarded background sync} to ensure seamless 24/7 cloud persistence and zero data race conditions.}
+      \resumeItemListEnd
+      \vspace{-13pt}
+
+
+--------------------------------------------------------------------------------
+3. PLAIN TEXT VERSION (For Word / Google Docs / Email)
+--------------------------------------------------------------------------------
+AttendWise | Kotlin, Spring Boot 3, Jetpack Compose, Room DB, MongoDB Atlas, JWT, Docker, Render
+GitHub: https://github.com/Ankit-git801/AttendWise
+
+• Engineered a full-stack, offline-first Android app serving 50+ active users, backed by a Spring Boot 3 REST API and MongoDB Atlas cloud database that reduces attendance logging to a single tap via exact-time notifications.
+• Architected 8 Jetpack Compose Material3 screens backed by a 3-entity Room database and parallel coroutine data streams, accelerating sign-in and cross-device sync response times to under 0.5 seconds.
+• Achieved 95%+ notification delivery precision across Android 12-14 Doze restrictions, time-zone shifts, and system reboots by implementing Doze-exempt setAlarmClock() scheduling across 4 custom BroadcastReceivers.
+• Containerized and deployed the backend on Render via Docker, integrating stateless JWT authentication, CORS security, and mutex-guarded background sync to ensure seamless 24/7 cloud persistence and zero data race conditions.
+================================================================================
