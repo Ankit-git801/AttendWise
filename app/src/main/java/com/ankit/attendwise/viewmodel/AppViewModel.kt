@@ -394,6 +394,11 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         isPresent: Boolean,
         note: String
     ) {
+        if (_isSyncing.value) {
+            Log.w("AppViewModel", "Ignored markAttendance call during active cloud sync")
+            return
+        }
+
         // TRACKER: Inform that this notification should be silenced if active
         NotificationProcessingTracker.markAsProcessed(subjectId, scheduleId)
         
@@ -861,16 +866,28 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun signUpWithEmail(email: String, password: String, onComplete: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
+            _isSyncing.value = true
             val result = repository.register(RegisterRequest(email, password, userName.value.ifBlank { "Student" }))
             when (result) {
                 is NetworkResult.Success -> {
                     val user = result.data.user
                     preferencesManager.saveUserName(user.name)
                     onComplete(true, null)
-                    syncData()
+                    try {
+                        repository.syncAll()
+                        rescheduleAllAlarms()
+                    } finally {
+                        _isSyncing.value = false
+                    }
                 }
-                is NetworkResult.Error -> onComplete(false, result.message)
-                is NetworkResult.Exception -> onComplete(false, result.e.message)
+                is NetworkResult.Error -> {
+                    _isSyncing.value = false
+                    onComplete(false, result.message)
+                }
+                is NetworkResult.Exception -> {
+                    _isSyncing.value = false
+                    onComplete(false, result.e.message)
+                }
             }
         }
     }
@@ -879,7 +896,6 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             _isSyncing.value = true
             val result = repository.login(LoginRequest(email, password))
-            _isSyncing.value = false
             when (result) {
                 is NetworkResult.Success -> {
                     val user = result.data.user
@@ -889,12 +905,22 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
                     // INSTANT UI FEEDBACK: Dismiss sign-in dialog immediately
                     onComplete(true, null)
                     
-                    // Trigger full sync & alarm rescheduling in background
-                    syncData()
-                    rescheduleAllAlarms()
+                    // KEEP _isSyncing = true WHILE syncAll() runs in background!
+                    try {
+                        repository.syncAll()
+                        rescheduleAllAlarms()
+                    } finally {
+                        _isSyncing.value = false
+                    }
                 }
-                is NetworkResult.Error -> onComplete(false, result.message)
-                is NetworkResult.Exception -> onComplete(false, result.e.message)
+                is NetworkResult.Error -> {
+                    _isSyncing.value = false
+                    onComplete(false, result.message)
+                }
+                is NetworkResult.Exception -> {
+                    _isSyncing.value = false
+                    onComplete(false, result.e.message)
+                }
             }
         }
     }
