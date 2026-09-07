@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -675,81 +676,82 @@ fun TodayScheduleCard(
                     modifier = Modifier.padding(start = 24.dp, end = 16.dp, bottom = 16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    AnimatedContent(
-                        targetState = isAlreadyMarked,
-                        transitionSpec = {
-                            fadeIn(animationSpec = tween(300)) togetherWith
-                                    fadeOut(animationSpec = tween(300)) using
-                                    SizeTransform(clip = false)
-                        },
-                        modifier = Modifier.fillMaxWidth(), label = "attendance_buttons"
-                    ) { marked ->
-                        if (marked) {
-                            val (icon, text, color) = when (recordType) {
-                                RecordType.CANCELLED -> Triple(Icons.Filled.EventBusy, stringResource(R.string.class_cancelled), MaterialTheme.colorScheme.onSurfaceVariant)
-                                else -> if (wasPresent == true) Triple(Icons.Filled.CheckCircle, stringResource(R.string.marked_as_present), SuccessGreen) else Triple(Icons.Filled.Cancel, stringResource(R.string.marked_as_absent), ErrorRed)
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(icon, contentDescription = null, tint = color)
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = text,
-                                    style = MaterialTheme.typography.labelLarge,
-                                    color = color,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Button(
-                                    onClick = { 
-                                        if (!isSyncing) {
+                    if (isSyncing && record == null) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(36.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        )
+                    } else {
+                        AnimatedContent(
+                            targetState = isAlreadyMarked,
+                            transitionSpec = {
+                                fadeIn(animationSpec = tween(300)) togetherWith
+                                        fadeOut(animationSpec = tween(300)) using
+                                        SizeTransform(clip = false)
+                            },
+                            modifier = Modifier.fillMaxWidth(), label = "attendance_buttons"
+                        ) { marked ->
+                            if (marked) {
+                                val (icon, text, color) = when (recordType) {
+                                    RecordType.CANCELLED -> Triple(Icons.Filled.EventBusy, stringResource(R.string.class_cancelled), MaterialTheme.colorScheme.onSurfaceVariant)
+                                    else -> if (wasPresent == true) Triple(Icons.Filled.CheckCircle, stringResource(R.string.marked_as_present), SuccessGreen) else Triple(Icons.Filled.Cancel, stringResource(R.string.marked_as_absent), ErrorRed)
+                                }
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(icon, contentDescription = null, tint = color)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        text = text,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = color,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            } else {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Button(
+                                        onClick = { 
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             appViewModel.markDateAsPresent(subject.id, schedule.id, date) 
-                                        }
-                                    },
-                                    enabled = !isSyncing,
-                                    modifier = Modifier.weight(1f).height(40.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text(stringResource(R.string.mark_present), style = MaterialTheme.typography.labelLarge)
-                                }
-                                OutlinedButton(
-                                    onClick = { 
-                                        if (!isSyncing) {
+                                        },
+                                        modifier = Modifier.weight(1f).height(40.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(0.dp)
+                                    ) {
+                                        Text(stringResource(R.string.mark_present), style = MaterialTheme.typography.labelLarge)
+                                    }
+                                    OutlinedButton(
+                                        onClick = { 
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             appViewModel.markDateAsAbsent(subject.id, schedule.id, date) 
-                                        }
-                                    },
-                                    enabled = !isSyncing,
-                                    modifier = Modifier.weight(1f).height(40.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    contentPadding = PaddingValues(0.dp)
-                                ) {
-                                    Text(stringResource(R.string.mark_absent), style = MaterialTheme.typography.labelLarge)
-                                }
-                                IconButton(
-                                    onClick = { 
-                                        if (!isSyncing) {
+                                        },
+                                        modifier = Modifier.weight(1f).height(40.dp),
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(0.dp)
+                                    ) {
+                                        Text(stringResource(R.string.mark_absent), style = MaterialTheme.typography.labelLarge)
+                                    }
+                                    IconButton(
+                                        onClick = { 
                                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                             appViewModel.markDateAsCancelled(subject.id, schedule.id, date) 
-                                        }
-                                    },
-                                    enabled = !isSyncing,
-                                    modifier = Modifier.size(40.dp),
-                                    colors = IconButtonDefaults.iconButtonColors(
-                                        contentColor = MaterialTheme.colorScheme.error
-                                    )
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.mark_cancelled)
-                                    )
+                                        },
+                                        modifier = Modifier.size(40.dp),
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            contentColor = MaterialTheme.colorScheme.error
+                                        )
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.mark_cancelled)
+                                        )
+                                    }
                                 }
                             }
                         }
