@@ -245,7 +245,6 @@ class AttendWiseRepository(
     fun getAllSubjectsLocal(): Flow<List<Subject>> = localDataSource.getAllSubjects()
     suspend fun getSubjectByIdLocal(id: String): Subject? = localDataSource.getSubjectById(id)
     fun getSubjectsWithAttendanceLocal(): Flow<List<SubjectWithAttendance>> = localDataSource.getSubjectsWithAttendance()
-    suspend fun getSubjectCountLocal(): Int = localDataSource.getSubjectCount()
     suspend fun deleteAllSubjectsLocal() = localDataSource.deleteAllSubjects()
 
     suspend fun addSubject(subject: Subject): NetworkResult<SubjectDto> {
@@ -265,8 +264,6 @@ class AttendWiseRepository(
         }
         return result
     }
-
-    suspend fun deleteSubjectAtomicLocal(subjectId: String) = localDataSource.deleteSubjectAtomic(subjectId)
 
     suspend fun deleteSubject(subjectId: String): NetworkResult<Unit> {
         localDataSource.deleteSubjectAtomic(subjectId)
@@ -342,19 +339,8 @@ class AttendWiseRepository(
         localDataSource.insertAttendanceRecords(records)
     }
 
-    suspend fun markHolidayTransactionLocal(date: Long, holidayRecord: AttendanceRecord) {
-        localDataSource.markHolidayTransaction(date, holidayRecord)
-    }
-
     // --- STATISTICS ---
     fun getOverallStatisticsFlowLocal(): Flow<AttendanceStatistics> = localDataSource.getOverallStatisticsFlow()
     suspend fun getTotalClassesForSubjectLocal(subjectId: String): Int = localDataSource.getTotalClassesForSubject(subjectId)
     suspend fun getPresentClassesForSubjectLocal(subjectId: String): Int = localDataSource.getPresentClassesForSubject(subjectId)
-    
-    suspend fun getOverallStatisticsRemote() = remoteDataSource.getOverallStatistics()
-    suspend fun getSubjectStatisticsRemote(subjectId: String) = remoteDataSource.getSubjectStatistics(subjectId)
-
-    // --- BATCH ---
-    suspend fun restoreDataBatchLocal(subjects: List<Subject>, schedules: List<ClassSchedule>, records: List<AttendanceRecord>) = 
-        localDataSource.restoreDataBatch(subjects, schedules, records)
 }

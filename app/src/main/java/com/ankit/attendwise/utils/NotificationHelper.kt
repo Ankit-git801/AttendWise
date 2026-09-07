@@ -16,7 +16,6 @@ import com.ankit.attendwise.data.ClassSchedule
 import com.ankit.attendwise.data.Subject
 import com.ankit.attendwise.receivers.NotificationActionReceiver
 import com.ankit.attendwise.receivers.NotificationDismissReceiver
-import java.time.LocalDate
 
 object NotificationHelper {
     private const val TAG = "NotificationHelper"
@@ -24,19 +23,17 @@ object NotificationHelper {
     private const val WARNING_CHANNEL_ID = "warning_channel"
 
     fun createNotificationChannel(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-            val channel = NotificationChannel(CHANNEL_ID, "Attendance Reminders", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Class attendance reminder notifications"
-            }
-            val warningChannel = NotificationChannel(WARNING_CHANNEL_ID, "Low Attendance Warnings", NotificationManager.IMPORTANCE_HIGH).apply {
-                description = "Low attendance warning notifications"
-            }
-
-            notificationManager.createNotificationChannel(channel)
-            notificationManager.createNotificationChannel(warningChannel)
+        val channel = NotificationChannel(CHANNEL_ID, "Attendance Reminders", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Class attendance reminder notifications"
         }
+        val warningChannel = NotificationChannel(WARNING_CHANNEL_ID, "Low Attendance Warnings", NotificationManager.IMPORTANCE_HIGH).apply {
+            description = "Low attendance warning notifications"
+        }
+
+        notificationManager.createNotificationChannel(channel)
+        notificationManager.createNotificationChannel(warningChannel)
     }
 
     fun buildAttendanceNotification(context: Context, subject: Subject, schedule: ClassSchedule, sessionDateEpoch: Long): Notification {
