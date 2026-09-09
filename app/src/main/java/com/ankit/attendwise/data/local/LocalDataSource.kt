@@ -45,6 +45,7 @@ class LocalDataSource(
     suspend fun getAttendanceRecordsForSubjectOnDate(subjectId: String, date: Long): List<AttendanceRecord> = attendanceDao.getAttendanceRecordsForSubjectOnDate(subjectId, date)
     suspend fun getAllAttendanceRecordsOnDateNow(date: Long): List<AttendanceRecord> = attendanceDao.getAllAttendanceRecordsOnDateNow(date)
     suspend fun insertAttendanceRecord(record: AttendanceRecord) = attendanceDao.insertAttendanceRecord(record)
+    suspend fun updateAttendanceNote(recordId: String, note: String) = attendanceDao.updateAttendanceNote(recordId, note)
     suspend fun insertAttendanceRecords(records: List<AttendanceRecord>) = attendanceDao.insertAttendanceRecords(records)
     suspend fun deleteAttendanceRecord(record: AttendanceRecord) = attendanceDao.deleteAttendanceRecord(record)
     suspend fun deleteAttendanceRecordsForSubjectOnDate(subjectId: String, date: Long) = attendanceDao.deleteAttendanceRecordsForSubjectOnDate(subjectId, date)

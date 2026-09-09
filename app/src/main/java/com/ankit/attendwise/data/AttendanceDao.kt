@@ -122,6 +122,9 @@ interface AttendanceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAttendanceRecord(record: AttendanceRecord)
 
+    @Query("UPDATE attendance_records SET note = :note, lastUpdated = :lastUpdated WHERE id = :recordId")
+    suspend fun updateAttendanceNote(recordId: String, note: String, lastUpdated: Long = System.currentTimeMillis())
+
     @Delete
     suspend fun deleteAttendanceRecord(record: AttendanceRecord)
 

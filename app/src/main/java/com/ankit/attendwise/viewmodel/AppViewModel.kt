@@ -479,12 +479,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
 
     fun updateAttendanceNote(recordId: String, subjectId: String, note: String) {
         viewModelScope.launch {
-            val record = repository.getAttendanceRecordByIdLocal(recordId)
-            if (record != null) {
-                val updatedRecord = record.copy(note = note, lastUpdated = System.currentTimeMillis())
-                repository.markAttendance(emptyList(), updatedRecord)
-                _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
-            }
+            repository.updateAttendanceNote(recordId, note)
+            checkAndTriggerLowAttendanceWarning(subjectId)
+            _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
         }
     }
 

@@ -332,6 +332,23 @@ class AttendWiseRepository(
         }
     }
 
+    suspend fun updateAttendanceNote(recordId: String, note: String) {
+        localDataSource.updateAttendanceNote(recordId, note)
+        val updatedRecord = localDataSource.getAttendanceRecordById(recordId)
+        if (updatedRecord != null) {
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val result = remoteDataSource.updateAttendance(updatedRecord.id, updatedRecord.toUpdateRequest())
+                    if (result !is NetworkResult.Success) {
+                        localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = updatedRecord.id, operation = OperationType.UPDATE))
+                    }
+                } catch (e: Exception) {
+                    localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = updatedRecord.id, operation = OperationType.UPDATE))
+                }
+            }
+        }
+    }
+
     suspend fun deleteAttendanceRecord(record: AttendanceRecord) {
         localDataSource.deleteAttendanceRecord(record)
         CoroutineScope(Dispatchers.IO).launch {

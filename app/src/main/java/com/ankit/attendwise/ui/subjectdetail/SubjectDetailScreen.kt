@@ -355,9 +355,13 @@ fun MarkAttendanceDialog(
     var editingNoteText by remember { mutableStateOf("") }
     var optionalNote by remember { mutableStateOf("") }
 
+    val formattedDate = remember(date) {
+        date.format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy"))
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(date.toString(), fontWeight = FontWeight.Bold) },
+        title = { Text(formattedDate, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium) },
         text = {
             Column(
                 modifier = Modifier
@@ -419,7 +423,19 @@ fun MarkAttendanceDialog(
                                     }
                                     Text(status, color = color, fontWeight = FontWeight.Bold)
                                     if (record.note.isNotEmpty() && editingNoteRecordId != record.id) {
-                                        Text("Note: ${record.note}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            modifier = Modifier.padding(top = 4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.Info,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(14.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(Modifier.width(4.dp))
+                                            Text(record.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
                                     }
                                 }
                                 Row {
@@ -440,7 +456,7 @@ fun MarkAttendanceDialog(
                                 OutlinedTextField(
                                     value = editingNoteText,
                                     onValueChange = { editingNoteText = it },
-                                    label = { Text("Edit Note") },
+                                    label = { Text("Note") },
                                     singleLine = true,
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier.fillMaxWidth()
@@ -466,11 +482,10 @@ fun MarkAttendanceDialog(
                 }
 
                 if (!isHoliday) {
-                    Text("Add Note (Optional)", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     OutlinedTextField(
                         value = optionalNote,
                         onValueChange = { optionalNote = it },
-                        placeholder = { Text("e.g. Quiz today, Medical leave...") },
+                        label = { Text("Note") },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth()
