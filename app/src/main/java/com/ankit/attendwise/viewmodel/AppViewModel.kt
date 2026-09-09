@@ -469,8 +469,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun updateAttendanceRecord(subjectId: String, date: LocalDate, isPresent: Boolean) {
-        val note = if (isPresent) "Marked Present" else "Marked Absent"
+    fun updateAttendanceRecord(subjectId: String, date: LocalDate, isPresent: Boolean, customNote: String = "") {
+        val defaultNote = if (isPresent) "Marked Present" else "Marked Absent"
+        val note = customNote.ifBlank { defaultNote }
         markAttendance(subjectId, ID_SCHEDULE_MANUAL, date, RecordType.MANUAL, isPresent, note)
         viewModelScope.launch {
             _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
@@ -530,8 +531,9 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun markDateAsCancelled(subjectId: String, date: LocalDate) {
-        markAttendance(subjectId, ID_SCHEDULE_MANUAL, date, RecordType.CANCELLED, false, "Class Cancelled")
+    fun markDateAsCancelled(subjectId: String, date: LocalDate, customNote: String = "") {
+        val note = customNote.ifBlank { "Class Cancelled" }
+        markAttendance(subjectId, ID_SCHEDULE_MANUAL, date, RecordType.CANCELLED, false, note)
         viewModelScope.launch {
             _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
         }

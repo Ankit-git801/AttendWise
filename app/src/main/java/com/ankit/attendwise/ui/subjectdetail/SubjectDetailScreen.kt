@@ -186,12 +186,12 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
                     if (isPresent) appViewModel.markDateAsPresent(subjectId, scheduleId, date, customNote)
                     else appViewModel.markDateAsAbsent(subjectId, scheduleId, date, customNote)
                 } else {
-                    appViewModel.updateAttendanceRecord(subjectId, date, isPresent)
+                    appViewModel.updateAttendanceRecord(subjectId, date, isPresent, customNote)
                 }
             },
             onConfirmCancelled = { scheduleId, customNote ->
                 if (scheduleId != null) appViewModel.markDateAsCancelled(subjectId, scheduleId, date, customNote)
-                else appViewModel.markDateAsCancelled(subjectId, date)
+                else appViewModel.markDateAsCancelled(subjectId, date, customNote)
             },
             onToggleHoliday = {
                 appViewModel.onHolidayToggleRequested(date)
@@ -482,14 +482,32 @@ fun MarkAttendanceDialog(
                 }
 
                 if (!isHoliday) {
-                    OutlinedTextField(
-                        value = optionalNote,
-                        onValueChange = { optionalNote = it },
-                        label = { Text("Note") },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        OutlinedTextField(
+                            value = optionalNote,
+                            onValueChange = { optionalNote = it },
+                            label = { Text("Note") },
+                            singleLine = true,
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.weight(1f)
+                        )
+                        if (optionalNote.isNotBlank() && recordsForDay.isNotEmpty()) {
+                            Button(
+                                onClick = {
+                                    val recordId = recordsForDay.first().id
+                                    onUpdateNote(recordId, optionalNote)
+                                    optionalNote = ""
+                                },
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Text("Save Note")
+                            }
+                        }
+                    }
 
                     if (schedulesForDay.isNotEmpty()) {
                         Text(stringResource(R.string.scheduled_sessions_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
