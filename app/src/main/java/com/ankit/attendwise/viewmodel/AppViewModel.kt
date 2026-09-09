@@ -477,6 +477,17 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun updateAttendanceNote(recordId: String, subjectId: String, note: String) {
+        viewModelScope.launch {
+            val record = repository.getAttendanceRecordByIdLocal(recordId)
+            if (record != null) {
+                val updatedRecord = record.copy(note = note, lastUpdated = System.currentTimeMillis())
+                repository.markAttendance(emptyList(), updatedRecord)
+                _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
+            }
+        }
+    }
+
     fun deleteAttendanceRecordById(recordId: String, subjectId: String) {
         viewModelScope.launch {
             val recordToDelete = repository.getAttendanceRecordByIdLocal(recordId)
@@ -498,22 +509,25 @@ class AppViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun markDateAsPresent(subjectId: String, scheduleId: String, date: LocalDate) {
-        markAttendance(subjectId, scheduleId, date, RecordType.CLASS, true, "Marked from App")
+    fun markDateAsPresent(subjectId: String, scheduleId: String, date: LocalDate, customNote: String = "") {
+        val note = customNote.ifBlank { "Marked from App" }
+        markAttendance(subjectId, scheduleId, date, RecordType.CLASS, true, note)
         viewModelScope.launch {
             _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
         }
     }
 
-    fun markDateAsAbsent(subjectId: String, scheduleId: String, date: LocalDate) {
-        markAttendance(subjectId, scheduleId, date, RecordType.CLASS, false, "Marked from App")
+    fun markDateAsAbsent(subjectId: String, scheduleId: String, date: LocalDate, customNote: String = "") {
+        val note = customNote.ifBlank { "Marked from App" }
+        markAttendance(subjectId, scheduleId, date, RecordType.CLASS, false, note)
         viewModelScope.launch {
             _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
         }
     }
 
-    fun markDateAsCancelled(subjectId: String, scheduleId: String, date: LocalDate) {
-        markAttendance(subjectId, scheduleId, date, RecordType.CANCELLED, false, "Class Cancelled")
+    fun markDateAsCancelled(subjectId: String, scheduleId: String, date: LocalDate, customNote: String = "") {
+        val note = customNote.ifBlank { "Class Cancelled" }
+        markAttendance(subjectId, scheduleId, date, RecordType.CANCELLED, false, note)
         viewModelScope.launch {
             _attendanceActionFeedback.emit(getApplication<Application>().getString(R.string.feedback_attendance_updated))
         }

@@ -9,10 +9,13 @@ import com.ankit.attendwise.data.remote.dto.*
 import com.ankit.attendwise.models.AttendanceRecordWithSubject
 import com.ankit.attendwise.models.AttendanceStatistics
 import com.ankit.attendwise.models.SubjectWithAttendance
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -313,21 +316,33 @@ class AttendWiseRepository(
 
     suspend fun markAttendance(recordIdsToClean: List<String>, newRecord: AttendanceRecord) {
         localDataSource.markAttendanceTransaction(recordIdsToClean, newRecord)
-        for (id in recordIdsToClean) {
-            remoteDataSource.deleteAttendance(id)
-            localDataSource.deletePendingOperationByEntity(id, EntityType.ATTENDANCE)
-        }
-        val result = remoteDataSource.createAttendance(newRecord.toCreateRequest())
-        if (result !is NetworkResult.Success) {
-            localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = newRecord.id, operation = OperationType.CREATE))
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                for (id in recordIdsToClean) {
+                    remoteDataSource.deleteAttendance(id)
+                    localDataSource.deletePendingOperationByEntity(id, EntityType.ATTENDANCE)
+                }
+                val result = remoteDataSource.createAttendance(newRecord.toCreateRequest())
+                if (result !is NetworkResult.Success) {
+                    localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = newRecord.id, operation = OperationType.CREATE))
+                }
+            } catch (e: Exception) {
+                localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = newRecord.id, operation = OperationType.CREATE))
+            }
         }
     }
 
     suspend fun deleteAttendanceRecord(record: AttendanceRecord) {
         localDataSource.deleteAttendanceRecord(record)
-        val result = remoteDataSource.deleteAttendance(record.id)
-        if (result !is NetworkResult.Success) {
-            localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = record.id, operation = OperationType.DELETE))
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val result = remoteDataSource.deleteAttendance(record.id)
+                if (result !is NetworkResult.Success) {
+                    localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = record.id, operation = OperationType.DELETE))
+                }
+            } catch (e: Exception) {
+                localDataSource.insertPendingOperation(PendingOperation(entityType = EntityType.ATTENDANCE, entityId = record.id, operation = OperationType.DELETE))
+            }
         }
     }
 

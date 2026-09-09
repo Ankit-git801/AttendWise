@@ -181,16 +181,16 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
             schedulesForDay = schedulesForDay,
             isHoliday = isHoliday,
             onDismiss = { showMarkAttendanceDialog = null },
-            onConfirm = { isPresent, scheduleId ->
+            onConfirm = { isPresent, scheduleId, customNote ->
                 if (scheduleId != null) {
-                    if (isPresent) appViewModel.markDateAsPresent(subjectId, scheduleId, date)
-                    else appViewModel.markDateAsAbsent(subjectId, scheduleId, date)
+                    if (isPresent) appViewModel.markDateAsPresent(subjectId, scheduleId, date, customNote)
+                    else appViewModel.markDateAsAbsent(subjectId, scheduleId, date, customNote)
                 } else {
                     appViewModel.updateAttendanceRecord(subjectId, date, isPresent)
                 }
             },
-            onConfirmCancelled = { scheduleId ->
-                if (scheduleId != null) appViewModel.markDateAsCancelled(subjectId, scheduleId, date)
+            onConfirmCancelled = { scheduleId, customNote ->
+                if (scheduleId != null) appViewModel.markDateAsCancelled(subjectId, scheduleId, date, customNote)
                 else appViewModel.markDateAsCancelled(subjectId, date)
             },
             onToggleHoliday = {
@@ -198,6 +198,9 @@ fun SubjectDetailScreen(subjectId: String, navController: NavController, appView
             },
             onDeleteMain = { clearAllDateRecords = date },
             onDeleteRecord = { recordId -> recordToDelete = recordId },
+            onUpdateNote = { recordId, newNote ->
+                appViewModel.updateAttendanceNote(recordId, subjectId, newNote)
+            },
             onAddExtra = { isPresent -> appViewModel.addExtraClasses(subjectId, date, isPresent, 1) }
         )
     }
@@ -340,13 +343,18 @@ fun MarkAttendanceDialog(
     schedulesForDay: List<com.ankit.attendwise.data.ClassSchedule>,
     isHoliday: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (Boolean, String?) -> Unit,
-    onConfirmCancelled: (String?) -> Unit,
+    onConfirm: (Boolean, String?, String) -> Unit,
+    onConfirmCancelled: (String?, String) -> Unit,
     onToggleHoliday: () -> Unit,
     onDeleteMain: () -> Unit,
     onDeleteRecord: (String) -> Unit,
+    onUpdateNote: (recordId: String, newNote: String) -> Unit,
     onAddExtra: (Boolean) -> Unit
 ) {
+    var editingNoteRecordId by remember { mutableStateOf<String?>(null) }
+    var editingNoteText by remember { mutableStateOf("") }
+    var optionalNote by remember { mutableStateOf("") }
+
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(date.toString(), fontWeight = FontWeight.Bold) },
@@ -386,33 +394,71 @@ fun MarkAttendanceDialog(
                 if (recordsForDay.isNotEmpty()) {
                     Text(stringResource(R.string.attendance_history_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                     recordsForDay.forEach { record ->
-                        Row(
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                .padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                                .padding(12.dp)
                         ) {
-                            Column {
-                                val status = when {
-                                    record.type == RecordType.CANCELLED -> stringResource(R.string.mark_cancelled)
-                                    record.isPresent -> stringResource(R.string.mark_present)
-                                    else -> stringResource(R.string.mark_absent)
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    val status = when {
+                                        record.type == RecordType.CANCELLED -> stringResource(R.string.mark_cancelled)
+                                        record.isPresent -> stringResource(R.string.mark_present)
+                                        else -> stringResource(R.string.mark_absent)
+                                    }
+                                    val color = when {
+                                        record.type == RecordType.CANCELLED -> MaterialTheme.colorScheme.outline
+                                        record.isPresent -> SuccessGreen
+                                        else -> ErrorRed
+                                    }
+                                    Text(status, color = color, fontWeight = FontWeight.Bold)
+                                    if (record.note.isNotEmpty() && editingNoteRecordId != record.id) {
+                                        Text("Note: ${record.note}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
                                 }
-                                val color = when {
-                                    record.type == RecordType.CANCELLED -> MaterialTheme.colorScheme.outline
-                                    record.isPresent -> SuccessGreen
-                                    else -> ErrorRed
-                                }
-                                Text(status, color = color, fontWeight = FontWeight.Bold)
-                                if (record.note.isNotEmpty()) {
-                                    Text(record.note, style = MaterialTheme.typography.bodySmall)
+                                Row {
+                                    IconButton(onClick = {
+                                        editingNoteRecordId = if (editingNoteRecordId == record.id) null else record.id
+                                        editingNoteText = record.note
+                                    }) {
+                                        Icon(Icons.Default.Edit, contentDescription = "Edit Note", tint = MaterialTheme.colorScheme.primary)
+                                    }
+                                    IconButton(onClick = { onDeleteRecord(record.id) }) {
+                                        Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
+                                    }
                                 }
                             }
-                            IconButton(onClick = { onDeleteRecord(record.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.action_delete), tint = MaterialTheme.colorScheme.error)
+
+                            if (editingNoteRecordId == record.id) {
+                                Spacer(Modifier.height(8.dp))
+                                OutlinedTextField(
+                                    value = editingNoteText,
+                                    onValueChange = { editingNoteText = it },
+                                    label = { Text("Edit Note") },
+                                    singleLine = true,
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End
+                                ) {
+                                    TextButton(onClick = { editingNoteRecordId = null }) {
+                                        Text(stringResource(R.string.action_cancel))
+                                    }
+                                    Button(onClick = {
+                                        onUpdateNote(record.id, editingNoteText)
+                                        editingNoteRecordId = null
+                                    }, shape = RoundedCornerShape(8.dp)) {
+                                        Text("Save Note")
+                                    }
+                                }
                             }
                         }
                     }
@@ -420,6 +466,16 @@ fun MarkAttendanceDialog(
                 }
 
                 if (!isHoliday) {
+                    Text("Add Note (Optional)", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    OutlinedTextField(
+                        value = optionalNote,
+                        onValueChange = { optionalNote = it },
+                        placeholder = { Text("e.g. Quiz today, Medical leave...") },
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
                     if (schedulesForDay.isNotEmpty()) {
                         Text(stringResource(R.string.scheduled_sessions_label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
                         schedulesForDay.forEach { schedule ->
@@ -427,13 +483,13 @@ fun MarkAttendanceDialog(
                             Column(modifier = Modifier.fillMaxWidth()) {
                                 Text(timeStr, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    IconButton(onClick = { onConfirm(true, schedule.id) }) {
+                                    IconButton(onClick = { onConfirm(true, schedule.id, optionalNote) }) {
                                         Icon(Icons.Default.CheckCircle, contentDescription = stringResource(R.string.mark_present), tint = SuccessGreen)
                                     }
-                                    IconButton(onClick = { onConfirm(false, schedule.id) }) {
+                                    IconButton(onClick = { onConfirm(false, schedule.id, optionalNote) }) {
                                         Icon(Icons.Default.Cancel, contentDescription = stringResource(R.string.mark_absent), tint = ErrorRed)
                                     }
-                                    IconButton(onClick = { onConfirmCancelled(schedule.id) }) {
+                                    IconButton(onClick = { onConfirmCancelled(schedule.id, optionalNote) }) {
                                         Icon(Icons.Default.EventBusy, contentDescription = stringResource(R.string.mark_cancelled), tint = MaterialTheme.colorScheme.outline)
                                     }
                                 }
@@ -442,10 +498,10 @@ fun MarkAttendanceDialog(
                     } else {
                         Text(stringResource(R.string.no_schedules_text), style = MaterialTheme.typography.bodySmall)
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Button(onClick = { onConfirm(true, null) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
+                            Button(onClick = { onConfirm(true, null, optionalNote) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
                                 Text(stringResource(R.string.mark_present))
                             }
-                            Button(onClick = { onConfirm(false, null) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
+                            Button(onClick = { onConfirm(false, null, optionalNote) }, shape = RoundedCornerShape(12.dp), modifier = Modifier.weight(1f)) {
                                 Text(stringResource(R.string.mark_absent))
                             }
                         }
@@ -463,6 +519,7 @@ fun MarkAttendanceDialog(
             Button(
                 onClick = onDeleteMain,
                 shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
                 enabled = recordsForDay.isNotEmpty()
             ) { Text(stringResource(R.string.action_clear_day)) }
         },
